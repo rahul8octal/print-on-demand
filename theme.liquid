@@ -1,0 +1,512 @@
+{%- comment %}<locksmith:3f3e>{% endcomment -%}
+    {%- include 'locksmith' -%}
+    {%- comment %}</locksmith:3f3e>{% endcomment -%}
+
+<!doctype html>
+
+<!--
+  ___                 ___           ___           ___
+       /  /\                     /__/\         /  /\         /  /\
+      /  /:/_                    \  \:\       /  /:/        /  /::\
+     /  /:/ /\  ___     ___       \  \:\     /  /:/        /  /:/\:\
+    /  /:/ /:/ /__/\   /  /\  ___  \  \:\   /  /:/  ___   /  /:/  \:\
+   /__/:/ /:/  \  \:\ /  /:/ /__/\  \__\:\ /__/:/  /  /\ /__/:/ \__\:\
+   \  \:\/:/    \  \:\  /:/  \  \:\ /  /:/ \  \:\ /  /:/ \  \:\ /  /:/
+    \  \::/      \  \:\/:/    \  \:\  /:/   \  \:\  /:/   \  \:\  /:/
+     \  \:\       \  \::/      \  \:\/:/     \  \:\/:/     \  \:\/:/
+      \  \:\       \__\/        \  \::/       \  \::/       \  \::/
+       \__\/                     \__\/         \__\/         \__\/
+
+  --------------------------------------------------------------------
+  #  Stiletto v4.0.1
+  #  Documentation: https://help.fluorescent.co/v/stiletto
+  #  Purchase: https://themes.shopify.com/themes/stiletto/
+  #  A product by Fluorescent: https://fluorescent.co/
+  --------------------------------------------------------------------
+-->
+
+<html class="no-js" lang="{{ request.locale.iso_code }}" style="--announcement-height: 1px;">
+<head>
+    {{ locksmith_initializations }}
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    {% render 'meta-description' %}
+
+    <link rel="canonical" href="{{ canonical_url }}">
+    <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+
+    {%- if settings.favicon != blank -%}
+        <link rel="shortcut icon" href="{{ settings.favicon | image_url: width: 32, height: 32 }}" type="image/png">
+    {%- endif -%}
+
+    {%- capture seo_title -%}
+        {%- if request.page_type == 'search' and search.performed == true -%}
+            {{ 'search.heading' | t: count: search.results_count }}:
+            {{ 'search.results_with_count' | t: terms: search.terms, count: search.results_count }}
+        {%- else -%}
+            {{ page_title }}
+        {%- endif -%}
+        {%- if current_tags -%}
+            {%- assign meta_tags = current_tags | join: ', ' -%}
+            &ndash; {{ 'general.meta.tags' | t: tags: meta_tags -}}
+        {%- endif -%}
+        {%- if current_page != 1 -%}
+            &ndash; {{ 'general.meta.page' | t: page: current_page }}
+        {%- endif -%}
+    {%- assign escaped_page_title = page_title | escape -%}
+        {%- unless escaped_page_title contains shop.name -%}
+            &ndash; {{ shop.name }}
+        {%- endunless -%}
+    {%- endcapture -%}
+    <title>{{ seo_title | strip }}</title>
+
+    {% render 'social-meta-tags' %}
+
+    {% render 'theme-setup' %}
+    {% render 'theme-setting-vars' %}
+    {%- render 'theme-globals' -%}
+
+    {{ content_for_header }}
+    {%- if customer.metafields.sparklayer.authentication -%}
+        {%- unless page.handle contains 'product-personalization'
+            or product.handle contains 'customize-your-own'
+        -%}
+            {% comment %} or template == 'cart' {% endcomment %}
+            <!-- Anything inside here only shows for logged in customers -->
+            <!-- Start of SparkLayer core script -->
+
+            <!-- IMPORTANT: sparkOptions MUST be defined BEFORE the script loads -->
+            <script>
+                console.log('=== Setting up SparkLayer Options ===');
+
+                window.sparkOptions = {
+                    siteId: "stickercactus",
+                    platform: "shopify",
+                    rootUrl: {{ routes.root_url | json }},
+                    language: {{ request.locale.iso_code | json }},
+                    accountRedirect: {
+                        urlRegex: /\/account/g,
+                        goTo: "/index", // page to redirect logged in users to
+                    },
+                    auth: {
+                        user: {{ customer.email | json }},
+                        token: {{ customer.metafields.sparklayer.authentication | json }},
+                    },
+
+                    // Debug: onReady to confirm SparkLayer initialized with our options
+                    onReady() {
+                        console.log('=== SparkLayer Ready! Options loaded successfully ===');
+                        console.log('sparkOptions:', window.sparkOptions);
+                    },
+
+                    // Debug: onCartUpdate to see if ANY cart updates are detected
+                    // Inside window.sparkOptions = { ... }
+
+// Debug: onCartUpdate to see if ANY cart updates are detected
+// Debug: onCartUpdate to see if ANY cart updates are detected
+                    onCartUpdate(cart, results) {
+                        // 1. Update the data object
+                        cart.items.forEach((item, index) => {
+                            let customImageUrlAttribute = item.customAttributes?.find(attribute => attribute.key === '_customization_image');
+                            if (customImageUrlAttribute && customImageUrlAttribute.value !== '') {
+                                let cleanUrl = customImageUrlAttribute.value.replace(/_\d+x/, '');
+                                item.cartImageUrl = cleanUrl;
+                                item.image = cleanUrl;
+                            }
+                            cart.items[index] = item;
+                        });
+
+                        // 2. The "Deep Piercer" function to navigate nested Shadow DOMs
+                        const fixNestedVisuals = () => {
+                            // Level 1: Find the main drawer
+                            const drawer = document.querySelector('spark-drawer');
+                            if (!drawer || !drawer.shadowRoot) return;
+
+                            // Level 2: Find the cart items inside the drawer's shadow root
+                            const sparkItems = drawer.shadowRoot.querySelectorAll('spark-cart-item');
+
+                            sparkItems.forEach(item => {
+                                if (item.shadowRoot) {
+                                    // Level 3: Find the image link inside the item's shadow root
+                                    const imgLink = item.shadowRoot.querySelector('.cart-item--image a');
+                                    if (imgLink) {
+                                        const currentStyle = imgLink.getAttribute('style');
+                                        if (currentStyle && currentStyle.includes('_255x')) {
+                                            const newStyle = currentStyle.replace(/_255x/g, '');
+                                            imgLink.setAttribute('style', newStyle);
+                                            console.log('Fixed Deeply Nested Image:', newStyle);
+                                        }
+                                    }
+                                }
+                            });
+                        };
+
+                        // 3. Execution Strategy:
+                        // SparkLayer often re-renders on a loop, so we run multiple checks
+                        [10, 100, 300, 700, 1500].forEach(delay => {
+                            setTimeout(fixNestedVisuals, delay);
+                        });
+
+                        return cart;
+                    }
+                };
+            </script>
+            <!-- Load SparkLayer script AFTER options are defined -->
+            <script src="https://cdn.sparklayer.io/spark.1.0.21.js"></script>
+            <!-- Transfer Shopify cart items to SparkLayer cart -->
+            <script>
+                (function () {
+                    console.log('=== Cart Transfer Script Loaded ===');
+                    console.log('Sync flag:', localStorage.getItem('sparkCartNeedsSync'));
+
+                    async function transferCartItems() {
+                        console.log('Checking for SparkLayer...', {
+                            spark: !!window.spark,
+                            getCart: !!(window.spark && window.spark.getCart),
+                        });
+
+                        if (!window.spark || !window.spark.getCart) {
+                            setTimeout(transferCartItems, 100);
+                            return;
+                        }
+
+                        console.log('SparkLayer detected!');
+
+                        // Check if we need to transfer items
+                        const needsSync = localStorage.getItem('sparkCartNeedsSync');
+                        console.log('Needs sync?', needsSync);
+
+                        if (needsSync === 'true') {
+                            console.log('Starting cart transfer...');
+
+                            try {
+                                // Fetch Shopify cart
+                                const response = await fetch('/cart.js');
+                                const shopifyCart = await response.json();
+
+                                console.log('Shopify cart data:', shopifyCart);
+                                console.log('Number of items:', shopifyCart.items ? shopifyCart.items.length : 0);
+
+                                if (shopifyCart.items && shopifyCart.items.length > 0) {
+                                    console.log('Items to transfer:', shopifyCart.items);
+
+                                    // Add each item to SparkLayer cart using correct API
+                                    for (const item of shopifyCart.items) {
+                                        console.log('Adding item:', {
+                                            sku: item.sku,
+                                            adjustQuantity: item.quantity,
+                                        });
+                                        const products = {
+                                            products: [
+                                                {
+                                                    sku: item.sku,
+                                                    adjustQuantity: item.quantity,
+                                                    customAttributes: [
+                                                        {
+                                                            key: "_customization_image",
+                                                            value: item.properties._customization_image
+                                                        },
+                                                    ]
+                                                },
+                                            ],
+                                            clearCart: false,
+                                        };
+                                        try {
+                                            const result = await window.spark.updateCart(products);
+                                            console.log('Item added successfully:', result);
+                                        } catch (error) {
+                                            console.error('Error adding item:', error);
+                                        }
+                                    }
+
+                                    console.log('All items transferred');
+
+                                    // Clear Shopify cart
+                                    console.log('Clearing Shopify cart...');
+                                    await fetch('/cart/clear.js', { method: 'POST' });
+                                    console.log('Shopify cart cleared');
+
+                                    // Get updated SparkLayer cart
+                                    console.log('Getting SparkLayer cart...');
+                                    const sparkCart = await window.spark.getCart();
+                                    console.log('SparkLayer cart:', sparkCart);
+
+                                    // Clear sync flag
+                                    localStorage.removeItem('sparkCartNeedsSync');
+
+                                    // Open SparkLayer cart
+                                    console.log('Opening SparkLayer cart...');
+                                    window.location.hash = 'spark-cart';
+                                    console.log('=== Transfer Complete! ===');
+                                } else {
+                                    console.log('No items in Shopify cart to transfer');
+                                    localStorage.removeItem('sparkCartNeedsSync');
+                                }
+                            } catch (error) {
+                                console.error('Transfer error:', error);
+                            }
+                        } else {
+                            console.log('No sync needed');
+                        }
+                    }
+
+                    // Set up event listeners
+                    console.log('Setting up event listeners...');
+
+                    window.addEventListener('spark:ready', function () {
+                        console.log('spark:ready event fired');
+                        transferCartItems();
+                    });
+
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', function () {
+                            console.log('DOMContentLoaded fired');
+                            setTimeout(transferCartItems, 1000);
+                        });
+                    } else {
+                        console.log('Document already loaded, starting transfer check');
+                        setTimeout(transferCartItems, 1000);
+                    }
+                })();
+            </script>
+
+            <!-- End of SparkLayer core script -->
+            <!-- SparkLayer Sample CSS Code -->
+            <style type="text/css">
+                :root {
+                    /* Set the brand styling */
+                    --b2b-brand-color: #3D1E17; /* Main brand colour*/
+                    --b2b-brand-color-hover: #CCCCCC; /* Main brand colour hover */
+                    --b2b-brand-font: "Instrument Sans", sans-serif; /* Main brand font */
+                    --b2b-brand-font-heading: "Instrument Sans", sans-serif; /* Main brand heading font */
+
+                    /* Update colours */
+                    --spark-default-body-color: #555555; /* Main body colour*/
+                    --spark-primary-color: #000000; /* Main title colour*/
+                    --spark-secondary-color: var(--b2b-brand-color); /* Main highlight colour*/
+                    --spark-link-color: var(--b2b-brand-color); /* Link colour*/
+
+                    /* Typefaces */
+                    --spark-font-default: var(--b2b-brand-font); /* Body typeface*/
+                    --spark-font-highlight: var(--b2b-brand-font-heading); /* Highlight typeface*/
+                    --spark-font-weight-default: 400; /* Default font weight*/
+                    --spark-font-weight-medium: 500; /* Medium font weight*/
+                    --spark-font-weight-heavy: 600; /* Bold font weight*/
+
+                    /* General */
+                    --spark-border-radius-default: 0; /* Default border radius*/
+                    --spark-drawer-max-width: 700px; /* Width of overlay*/
+                    --spark-drawer-max-width-wide: 1000px; /* Width of overlay in maximised view*/
+
+                    /* Font sizes */
+                    --spark-font-default-size: 14px; /* Default font size*/
+                    --spark-font-default-size-small: 14px; /* Default font size - small screens*/
+                    --spark-header-font: var(--b2b-brand-font-heading); /* Header typeface*/
+                    --spark-header-font-weight: 500; /* Header font weight*/
+                    --spark-h1-fontsize: 24px; /* Header 1 font size*/
+                    --spark-h2-fontsize: 22px; /* Header 2 font size*/
+                    --spark-h3-fontsize: 20px; /* Header 3 font size*/
+                    --spark-h4-fontsize: 16px; /* Header 4 font size*/
+                    --spark-h5-fontsize: 15px; /* Header 5 font size*/
+                    --spark-h6-fontsize: 14px; /* Header 6 font size*/
+
+                    --spark-pricing-fontsize: 22px; /* Font size of pricing*/
+                    --spark-pricing-font-weight: 500; /* Font weight of pricing*/
+                    --spark-pricing-fontsize-small: 14px; /* Font size of pricing on mobile*/
+
+                    --spark-product-code-fontsize: 16px; /* Font size of product code*/
+                    --spark-product-code-font-weight: 500; /* Font weight of product code*/
+                    --spark-product-code-fontsize-small: 14px; /* Font size of product code on mobile*/
+                    --spark-product-stockstatus-align: flex-start; /* Aligment of stock status for single variants*/
+
+                    /* Buttons */
+                    --spark-button-font-family: var(--b2b-brand-font-heading); /* Button typeface*/
+                    --spark-button-color: var(--b2b-brand-color); /* Default sutton colour*/
+                    --spark-button-color-highlight: var(--b2b-brand-color-hover); /* Default button colour hover*/
+                    --spark-button-large-color: var(--b2b-brand-color); /* Large button colour*/
+                    --spark-button-large-color-highlight: var(--b2b-brand-color-hover); /* Large button colour hover*/
+                    --spark-border-radius-button: 0; /* Button border radius*/
+                    --spark-button-font-weight: 600; /* Button font weight*/
+                    --spark-button-text-transform: none; /* Button text transform*/
+                    --spark-button-text-letter-spacing: 0; /* Button letter spacing*/
+                    --spark-button-padding: 1em 2.75em; /* Button padding*/
+                    --spark-button-small-font-size: 16px; /* Small button font size*/
+
+                    /* Tables */
+                    --spark-table-border-color: #CCCCCC; /* Table border colour*/
+                    --spark-table-header-background-color: #F1F1F1; /* Table header background*/
+                    --spark-table-header-text-color: #222222; /* Table header font colour*/
+                    --spark-table-header-font-weight: 500; /* Table header font weight*/
+
+                    /* Product Card */
+                    --spark-product-card-button-radius: 0; /* Button radius*/
+                    --spark-product-card-button-padding: 0.75em 1em; /* Button padding*/
+                    --spark-product-card-pricing-font-size: 15px; /* Pricng font size*/
+                    --spark-product-card-pricing-font-size-small: 14px; /* Pricng font size on mobile*/
+                    --spark-product-card-select-min-height: 0; /* Set a min-height for select menu*/
+
+                }
+                @media screen and (min-width: 1500px) {
+                    .product{
+                        max-width: 1800px
+                    }
+                }
+
+                .product-form__item--submit {
+                    display: none !important
+                }
+            </style>
+            <!-- End SparkLayer Sample CSS Code -->
+        {%- endunless -%}
+    {%- endif -%}
+    <!--
+      Add this code to theme.liquid before the closing head tag
+      template refers to files within your theme
+      request.path refers to URLs on your store
+    -->
+
+    {%- if customer.metafields.sparklayer.authentication -%}
+        <!-- Don't redirect for B2B customers -->
+
+    {%- else -%}
+        {%- if request.design_mode -%}
+            <!-- Don't redirect if using Shopify Customiser tool -->
+
+        {%- else -%}
+            {%- if template contains 'customers/'
+                or request.path == '/challenge'
+                or request.path == '/pages/contact'
+                or request.path == '/pages/b2b-login'
+                or request.path == '/pages/about-us'
+                or request.path == '/policies/terms-of-service'
+                or request.path == '/pages/b2b-onboarding'
+                or request.path == '/pages/wholesale-terms'
+                or request.path == '/pages/faq'
+                or request.path == '/policies/shipping-policy'
+                or request.path == '/policies/refund-policy'
+                or request.path == '/policies/privacy-policy'
+                or request.path == '/pages/data-sharing-opt-out'
+                or page.handle contains 'product-personalization'
+                or product.handle contains 'customize-your-own'
+            -%}
+                {% comment %} {%- else -%}
+                <script>
+                    window.location.href = '/pages/b2b-login';
+                </script> {% endcomment %}
+
+
+            {%- else -%}
+                <script>
+                    const user = new URLSearchParams(window.location.search).get('user');
+                    if (!user || user != 'teeinblue') {
+                        if (localStorage.getItem('isTeeinBlueUser') != 'true') location.replace('/pages/b2b-login');
+                    } else {
+                        localStorage.setItem('isTeeinBlueUser', 'true');
+                    }
+                </script>
+
+            {%- endif -%}
+        {%- endif -%}
+    {%- endif -%}
+
+    <!-- End of redirect code -->
+
+    <script type="text/javascript">
+        teeinblue = {
+            gallerySelector: '.product__primary-left',
+            formSelector: '.product__details .product-form[id*="product_form"]',
+        };
+    </script>
+    <style target="teeinblue">
+        .teeinblue-enabled:not(.teeinblue-platform-product-enabled) {
+        [data-spark="b2c-only"]:has(> .product__variants-wrapper),
+        [data-spark="b2c-only"]:has(> .product__controls-group-quantity) {
+            display: none !important;
+        }
+        }
+        {% if product.handle contains 'customize-your-own'
+          or collection.handle contains 'customize-your-own-product' %}
+        spark-product-card {
+            display: none !important;
+        }
+        {% endif %}
+    </style>
+
+    <!-- ADD THIS: Track cart additions on customization pages -->
+    {%- if customer.metafields.sparklayer.authentication -%}
+        {%- if product.handle contains 'customize-your-own' -%}
+            <script>
+                (function () {
+                    // Monitor cart additions from Teeinblue
+                    const originalFetch = window.fetch;
+                    window.fetch = function (...args) {
+                        const url = args[0];
+
+                        if (typeof url === 'string' && (url.includes('/cart/add') || url.includes('/cart/update'))) {
+                            localStorage.setItem('sparkCartNeedsSync', 'true');
+                            console.log('Cart modified - will sync with SparkLayer');
+                        }
+
+                        return originalFetch.apply(this, args);
+                    };
+
+                    // Also monitor form submissions
+                    document.addEventListener('submit', function (e) {
+                        if (e.target.action && e.target.action.includes('/cart/add')) {
+                            localStorage.setItem('sparkCartNeedsSync', 'true');
+                        }
+                    });
+                })();
+            </script>
+        {%- endif -%}
+    {%- endif -%}
+
+    {{ 'teeinblue-custom.js' | asset_url | script_tag }}
+</head>
+
+<body class="template-{{ request.page_type | handle }}">
+<div class="page">
+    {% if settings.enable_page_transitions %}
+        {% render 'page-transition-overlay' %}
+    {% endif %}
+
+    <div class="theme-editor-scroll-offset"></div>
+
+    <div class="header__space" data-header-space></div>
+
+    {% sections 'header-group' %}
+    {% sections 'overlay-group' %}
+
+    {%- if settings.enable_quick_search -%}
+        {% render 'quick-search' %}
+    {%- endif -%}
+
+    <div class="header-overlay" data-header-overlay>
+        <div class="header-overlay__inner"></div>
+    </div>
+
+    <main id="main" class="main">
+        {{ content_for_layout }}
+    </main>
+
+    {% sections 'footer-group' %}
+
+    {% render 'store-availability-drawer' %}
+    {% render 'quick-view-modal' %}
+    {% render 'modal' %}
+    {% render 'back-to-top' %}
+</div>
+
+{{ '//www.youtube.com/iframe_api' | script_tag }}
+{{ '//cdn.shopify.com/shopifycloud/shopify-plyr/v1.0/shopify-plyr.css' | stylesheet_tag }}
+</body>
+<link
+    rel="preload"
+    fetchpriority="low"
+    href="{{ 'theme-deferred.css' | asset_url }}"
+    as="style"
+    onload="this.onload=null;this.rel='stylesheet'"
+>
+<noscript><link rel="stylesheet" href="{{ 'theme-deferred.css' | asset_url }}"></noscript>
+</html>

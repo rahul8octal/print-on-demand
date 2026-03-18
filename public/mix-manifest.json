@@ -1,0 +1,16 @@
+{
+    "/js/app.js": "/js/app.js",
+    "/css/app.css": "/css/app.css",
+    "/images/contact.svg": "/images/contact.svg",
+    "/images/guide/account.webp": "/images/guide/account.webp",
+    "/images/guide/customer-login.webp": "/images/guide/customer-login.webp",
+    "/images/guide/flow-invite.webp": "/images/guide/flow-invite.webp",
+    "/images/guide/invitation-group.webp": "/images/guide/invitation-group.webp",
+    "/images/guide/login-success.webp": "/images/guide/login-success.webp",
+    "/images/guide/multi-settings.webp": "/images/guide/multi-settings.webp",
+    "/images/guide/settings.webp": "/images/guide/settings.webp",
+    "/images/guide/theme-customization.webp": "/images/guide/theme-customization.webp",
+    "/images/invitation-illustration.svg": "/images/invitation-illustration.svg",
+    "/images/page_not_found.webp": "/images/page_not_found.webp",
+    "/images/server_error.webp": "/images/server_error.webp"
+}

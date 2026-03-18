@@ -1,0 +1,41 @@
+<?php
+
+use App\Http\Controllers\GeneralController;
+use App\Http\Controllers\Internal\ChargeController;
+use App\Http\Controllers\ProductController;
+use Illuminate\Support\Facades\Route;
+use Rap2hpoutre\LaravelLogViewer\LogViewerController;
+use Osiset\ShopifyApp\Util;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+*/
+
+Route::get('/', function () {
+    return view('app');
+})->middleware(['verify.shopify'])->name('home');
+
+Route::get('/ar/demo/{productId}', [ProductController::class, 'showPublicDemoAR']);
+
+Route::get('/ar/model/{productId}', [ProductController::class, 'showPublicModelAR']);
+
+Route::get('/ar/{productId}', [ProductController::class, 'showPublicAR']);
+
+Route::post('web-vitals', [GeneralController::class, 'createWebVital']);
+
+Route::group(['prefix' => 'general'], function () {
+    Route::get('/webhooks', [GeneralController::class, 'getWebhooks']);
+    Route::get('/logs_a4edcca3-6d2e-42e1-980c-e9d8f1d92e90', [LogViewerController::class, 'index']);
+});
+
+Route::get('/billing/{plan?}', [ChargeController::class, 'index'])
+    ->middleware(['verify.shopify'])
+    ->where('plan', '^([0-9]+|)$')
+    ->name(Util::getShopifyConfig('route_names.billing'));
+
+Route::get('/{any?}', function () {
+    return view('app');
+})->where('any', '.*')->middleware(['verify.shopify']);
