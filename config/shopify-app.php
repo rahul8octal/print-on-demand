@@ -405,6 +405,21 @@ return [
         [
             'topic' => 'CUSTOMERS_DATA_REQUEST',
             'address' => "$baseUrl/webhook/customers-data-request"
+        ],
+        [
+            'topic' => 'ORDERS_CREATE',
+            'address' => "$baseUrl/webhook/orders-create",
+            'job' => \App\Jobs\OrdersCreateJob::class
+        ],
+        [
+            'topic' => 'ORDERS_PAID',
+            'address' => "$baseUrl/webhook/orders-paid",
+            'job' => \App\Jobs\OrdersPaidJob::class
+        ],
+        [
+            'topic' => 'FULFILLMENTS_CREATE',
+            'address' => "$baseUrl/webhook/fulfillments-create",
+            'job' => \App\Jobs\FulfillmentsCreateJob::class
         ]
     ],
 

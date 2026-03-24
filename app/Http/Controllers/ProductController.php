@@ -19,10 +19,71 @@ class ProductController extends Controller
 
   private ProductRepositoryInterface $productRepo;
 
-  public function __construct(ProductRepositoryInterface $productRepo)
-  {
-    $this->productRepo = $productRepo;
-  }
+    public function __construct(ProductRepositoryInterface $productRepo)
+    {
+        $this->productRepo = $productRepo;
+    }
+
+    public function shopifyProducts(Request $request)
+    {
+        $shop = Auth::user();
+        try {
+            $version = config('shopify-app.api_version', '2024-04');
+            $response = $shop->api()->rest('GET', "/admin/api/{$version}/products.json");
+            
+            if ($response['errors']) {
+                $errorMsg = json_encode($response['errors']);
+                Log::error('Shopify Product Fetch Error:', [
+                    'shop' => $shop->name,
+                    'version' => $version,
+                    'response' => $response
+                ]);
+                return response()->json(['success' => false, 'message' => "Shopify API Error: {$errorMsg}"], 500);
+            }
+            
+            $products = $response['body']->container['products'];
+            
+            // Cross-reference with our database to see which ones are already configured
+            $configuredIds = Product::where('user_id', '=', $shop->id, 'and')
+                ->pluck('product_id')
+                ->toArray();
+                
+            foreach ($products as &$sp) {
+                $sp['is_configured'] = in_array($sp['id'], $configuredIds);
+            }
+
+            return response()->json(['success' => true, 'data' => $products]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function togglePod(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required',
+            'product_title' => 'required',
+        ]);
+        
+        $shop = Auth::user();
+        $product = Product::where('user_id', '=', $shop->id, 'and')
+            ->where('product_id', '=', $request->product_id, 'and')
+            ->first();
+            
+        if ($product) {
+            $product->delete();
+            return response()->json(['success' => true, 'message' => 'Product removed from POD Catalog']);
+        }
+        
+        Product::create([
+            'user_id' => $shop->id,
+            'product_id' => $request->product_id,
+            'is_active' => true,
+            'product_type' => 'pod'
+        ]);
+        
+        return response()->json(['success' => true, 'message' => 'Product added to POD Catalog']);
+    }
 
   public function index(Request $request)
   {
@@ -103,44 +164,53 @@ class ProductController extends Controller
   }
 
 
-  public function update(Request $request, $id)
-  {
-    useMoreMemory();
-    $request->validate([
-      'product_id' => 'sometimes|required',
-      'model' => 'sometimes|file|extensions:gltf,glb|max:102400',
-      'width' => 'nullable|numeric',
-      'height' => 'nullable|numeric',
-      'depth' => 'nullable|numeric',
-      'dimension_unit' => 'nullable|string|max:10',
-    ], [
-      'model.extensions' => 'Only GLTF, GLB model files are allowed.',
-      'model.max' => '3D model file must be under 100MB.',
-    ]);
+    public function update(Request $request, $id)
+    {
+        useMoreMemory();
+        $request->validate([
+            'product_id' => 'sometimes|required',
+            'model' => 'sometimes|file|extensions:gltf,glb|max:102400',
+            'width' => 'nullable|numeric',
+            'height' => 'nullable|numeric',
+            'depth' => 'nullable|numeric',
+            'dimension_unit' => 'nullable|string|max:10',
+        ], [
+            'model.extensions' => 'Only GLTF, GLB model files are allowed.',
+            'model.max' => '3D model file must be under 100MB.',
+        ]);
 
-    $input = $request->all();
+        $input = $request->all();
 
-    $product = Product::ofShop(AuthId())->findOrFail($id);
-    $shop = Auth::user();
+        $product = Product::where('user_id', '=', AuthId())->findOrFail($id);
+        $shop = Auth::user();
 
-    if ($request->hasFile('model')) {
-      // Delete old file from Shopify if it exists
-      if ($product->shopify_file_id) {
-        $this->deleteShopifyFile($product->shopify_file_id, $shop);
-      }
+        if ($request->hasFile('model')) {
+            // Delete old file from Shopify if it exists
+            if ($product->shopify_file_id) {
+                $this->deleteShopifyFile($product->shopify_file_id, $shop);
+            }
 
-      $file = $request->file('model');
-      $shopifyFileData = $this->uploadModelToShopify($file, $shop, $product->product_id);
-      $request->merge([
-        'model_url' => $shopifyFileData['cdnUrl'],
-        'shopify_file_id' => $shopifyFileData['fileId']
-      ]);
+            $file = $request->file('model');
+            $shopifyFileData = $this->uploadModelToShopify($file, $shop, $product->product_id);
+            $request->merge([
+                'model_url' => $shopifyFileData['cdnUrl'],
+                'shopify_file_id' => $shopifyFileData['fileId']
+            ]);
+        }
+
+        $product = $this->productRepo->update($id, $request);
+
+        return $this->sendResponse($product, "Product updated successfully");
     }
 
-    $product = $this->productRepo->update($id, $request);
+    public function returnPodCatalog()
+    {
+        $ids = Product::where('is_active', '=', true)
+            ->where('product_type', '=', 'pod')
+            ->pluck('product_id');
 
-    return $this->sendResponse($product, "Product updated successfully");
-  }
+        return response()->json(['success' => true, 'ids' => $ids]);
+    }
 
   private function uploadModelToShopify($file, $shop, $productId)
   {

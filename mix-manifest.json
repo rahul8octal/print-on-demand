@@ -1,7 +1,6 @@
 {
     "/public/js/app.js": "/public/js/app.js",
-    "/extensions/ar-app/assets/ar-extension.js": "/extensions/ar-app/assets/ar-extension.js",
-    "/extensions/ar-app/assets/ar-app.css": "/extensions/ar-app/assets/ar-app.css",
+    "/extensions/custom-design-studio/assets/designer.js": "/extensions/custom-design-studio/assets/designer.js",
     "/public/images/AR-app-banner.png": "/public/images/AR-app-banner.png",
     "/public/images/app_embeded.png": "/public/images/app_embeded.png",
     "/public/images/contact.svg": "/public/images/contact.svg",

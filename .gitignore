@@ -32,4 +32,3 @@ extensions/*/assets
 public/js
 mix-manifest.json
 shopify.app.ar-model.toml
-shopify.app.octilo-3d-ar-viewer.toml

@@ -15,6 +15,10 @@ const Navigation = (props) => {
             destination: DASHBOARD,
         },
         {
+            label: 'POD Catalog',
+            destination: '/products',
+        },
+        {
             label: 'App Setup',
             destination: APP_SETUP,
         },

@@ -10,12 +10,16 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'shops'], function () {
     Route::get('/auth', [ShopController::class, 'auth']);
+    Route::get('/designs', [\App\Http\Controllers\CustomDesignController::class, 'index']);
+    Route::post('/designs/{id}/sync', [\App\Http\Controllers\CustomDesignController::class, 'sync']);
 });
 
 Route::get('test-import-products', [TestController::class, 'importProducts']);
 
 Route::group(['prefix' => 'product'], function () {
     Route::get('/', [ProductController::class, 'index']);
+    Route::get('/shopify', [ProductController::class, 'shopifyProducts']);
+    Route::post('/toggle-pod', [ProductController::class, 'togglePod']);
     Route::post('/upload', [ProductController::class, 'store']);
     Route::get('/{id}', [ProductController::class, 'show']);
     Route::post('/{id}/update', [ProductController::class, 'update']);

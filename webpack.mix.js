@@ -14,8 +14,15 @@ mix.setPublicPath('./');
 
 mix.js('resources/app/app.js', 'public/js').react()
 // .js('resources/app/components/ExtensionARPreview.jsx', 'extensions/ar-app/assets/ar-extension.js').react()
+.js('resources/app/components/ExtensionDesignerPreview.jsx', 'extensions/custom-design-studio/assets/designer.js').react()
 // .postCss('resources/css/app.css', 'extensions/ar-app/assets/ar-app.css')
 .copyDirectory('resources/images', 'public/images');
+
+mix.options({
+    terser: {
+        extractComments: false,
+    }
+});
 
 if (mix.inProduction()) {
     mix.version();

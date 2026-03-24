@@ -20,8 +20,8 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://3d-ar-viewer.octiloapps.com',
-        'https://00a7-2405-201-200c-d02b-2dcc-8cfd-6139-b9af.ngrok-free.app',
+        'https://print-on-demand.test',
+        'https://d1cb-2405-201-200c-d81a-e86b-2774-7170-748c.ngrok-free.app',
         'https://admin.shopify.com',
         '*.myshopify.com',
         '*'

@@ -1,0 +1,28 @@
+<script>
+  window.appConfig = {
+    appUrl: "{{ app.metafields.studio.app_url | default: 'https://print-on-demand.test' }}" // fallback
+  };
+</script>
+
+<div id="designer-extension-root" 
+     data-product-id="{{ product.id }}" 
+     data-shop-url="{{ shop.domain }}">
+</div>
+
+<script src="{{ 'designer.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Custom Designer Studio",
+  "target": "section",
+  "templates": ["product"],
+  "settings": [
+    {
+      "type": "color",
+      "id": "btn_color",
+      "label": "Button Color",
+      "default": "#4f46e5"
+    }
+  ]
+}
+{% endschema %}

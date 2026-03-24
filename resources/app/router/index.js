@@ -7,6 +7,7 @@ import Settings from "../pages/settings/Settings";
 import { PageNotFound } from "../components/Index";
 import Plans from "../pages/plans/Plans";
 import AppSetup from '../pages/appSetup/AppSetup';
+import Products from '../pages/products/Products';
 
 const routes = [
     {
@@ -24,6 +25,10 @@ const routes = [
                     {
                         path: 'app-setup',
                         element: <AppSetup />,
+                    },
+                    {
+                        path: 'products',
+                        element: <Products />,
                     },
                     {
                         path: 'settings/:tab',
