@@ -13,8 +13,9 @@ import {
     Banner,
     EmptyState,
 } from '@shopify/polaris';
-import { ImageIcon } from '@shopify/polaris-icons';
+import { ImageIcon, ViewIcon } from '@shopify/polaris-icons';
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { API } from '../../api';
 
 export default function Products() {
@@ -22,6 +23,7 @@ export default function Products() {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(null);
     const [error, setError] = useState(null);
+    const { shop } = useSelector(state => state.shopStore);
 
     const fetchProducts = useCallback(async () => {
         try {
@@ -98,14 +100,26 @@ export default function Products() {
                     </Badge>
                 </IndexTable.Cell>
                 <IndexTable.Cell>
-                    <Button
-                        loading={actionLoading === product.id}
-                        variant={product.is_configured ? 'primary' : 'secondary'}
-                        tone={product.is_configured ? 'critical' : 'success'}
-                        onClick={() => handleTogglePod(product)}
-                    >
-                        {product.is_configured ? 'Disable Custom Studio' : 'Enable Custom Studio'}
-                    </Button>
+                    <InlineStack gap="200">
+                        <Button
+                            loading={actionLoading === product.id}
+                            variant={product.is_configured ? 'primary' : 'secondary'}
+                            tone={product.is_configured ? 'critical' : 'success'}
+                            onClick={() => handleTogglePod(product)}
+                        >
+                            {product.is_configured ? 'Disable Custom Studio' : 'Enable Custom Studio'}
+                        </Button>
+                        <Button
+                            icon={ViewIcon}
+                            onClick={() => {
+                                const domain = shop?.name || window.location.host;
+                                const url = `https://${domain}/products/${product.handle}`;
+                                window.open(url, '_blank');
+                            }}
+                        >
+                            Preview
+                        </Button>
+                    </InlineStack>
                 </IndexTable.Cell>
             </IndexTable.Row>
         ),

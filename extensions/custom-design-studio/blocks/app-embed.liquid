@@ -6,16 +6,7 @@
 }
 {% endschema %}
 
-{%- if template contains 'product' -%}
-  <div id="designer-extension-root" 
-       data-product-id="{{ product.id }}" 
-       data-shop-url="{{ shop.domain }}">
-  </div>
-
-  <script>
-    window.appConfig = {
-      appUrl: "{{ app.metafields.studio.app_url | default: 'https://print-on-demand.test' }}"
-    };
-  </script>
-  <script src="{{ 'designer.js' | asset_url }}" defer="defer"></script>
-{%- endif -%}
+{% comment %}
+  UI shifted to App Block (designer.liquid) to prevent duplication.
+  Enable the 'Custom Designer Studio' block in the theme editor on the product page.
+{% endcomment %}

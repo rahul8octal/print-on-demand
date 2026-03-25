@@ -13,9 +13,10 @@ import {
     Box,
     Grid,
     Link,
-    Icon
+    Icon,
+    Modal
 } from '@shopify/polaris';
-import { ExternalIcon, StoreIcon } from '@shopify/polaris-icons';
+import { ExternalIcon, StoreIcon, ViewIcon } from '@shopify/polaris-icons';
 import React, { useState, useEffect } from 'react';
 import { API } from '../../api';
 import { useSelector } from "react-redux";
@@ -24,6 +25,7 @@ export default function Dashboard() {
     const shop = useSelector(state => state.shopStore?.shop);
     const [loading, setLoading] = useState(true);
     const [designs, setDesigns] = useState([]);
+    const [previewImage, setPreviewImage] = useState(null);
     
     const fetchDesigns = async () => {
         try {
@@ -167,12 +169,36 @@ export default function Dashboard() {
                                                 </InlineStack>
                                             </IndexTable.Cell>
                                             <IndexTable.Cell>
-                                                <Link url={design.design_image_url} external target="_blank">
-                                                    <InlineStack gap="100" blockAlign="center">
-                                                        <span>Download Print Asset</span>
-                                                        <Icon source={ExternalIcon} />
-                                                    </InlineStack>
-                                                </Link>
+                                                <InlineStack gap="200" blockAlign="center">
+                                                    <Button
+                                                        size="slim"
+                                                        icon={ViewIcon}
+                                                        onClick={() => setPreviewImage(design.design_image_url)}
+                                                    >
+                                                        Preview
+                                                    </Button>
+                                                    <Button 
+                                                        size="slim" 
+                                                        variant="tertiary"
+                                                        onClick={async () => {
+                                                            try {
+                                                                const { data } = await API.get(`/app/shops/designs/${design.id}/token`);
+                                                                if (data.success && data.endpoint) {
+                                                                    const appUrl = process.env.MIX_APP_URL || process.env.APP_URL || '';
+                                                                    const url = `${appUrl}${data.endpoint}`;
+                                                                    window.open(url, '_blank');
+                                                                }
+                                                            } catch (err) {
+                                                                console.error("Preparation failed", err);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <InlineStack gap="100" blockAlign="center">
+                                                            <span>Download Print Assets (ZIP)</span>
+                                                            <Icon source={ExternalIcon} />
+                                                        </InlineStack>
+                                                    </Button>
+                                                </InlineStack>
                                             </IndexTable.Cell>
                                         </IndexTable.Row>
                                     ))}
@@ -182,6 +208,26 @@ export default function Dashboard() {
                     </BlockStack>
                 </Layout.Section>
             </Layout>
+
+            <Modal
+                open={!!previewImage}
+                onClose={() => setPreviewImage(null)}
+                title="Design Preview"
+                primaryAction={{
+                    content: 'Close',
+                    onAction: () => setPreviewImage(null),
+                }}
+            >
+                <Modal.Section>
+                    <div style={{ display: 'flex', justifyContent: 'center', background: '#f6f6f7', padding: '20px', borderRadius: '8px' }}>
+                        <img 
+                            src={previewImage} 
+                            alt="Design Preview" 
+                            style={{ maxWidth: '100%', height: 'auto', borderRadius: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
+                        />
+                    </div>
+                </Modal.Section>
+            </Modal>
         </Page>
     );
 }
