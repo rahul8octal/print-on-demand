@@ -15,7 +15,8 @@ import {
     Link,
     Icon,
     Modal,
-    Tabs
+    Pagination,
+    Filters
 } from '@shopify/polaris';
 import { ExternalIcon, StoreIcon, ViewIcon, ArrowRightIcon, ArrowLeftIcon } from '@shopify/polaris-icons';
 import React, { useState, useEffect } from 'react';
@@ -31,14 +32,24 @@ export default function Dashboard() {
     const [activeSide, setActiveSide] = useState('front');
     const [isFetchingDetail, setIsFetchingDetail] = useState(false);
     
-    const fetchDesigns = async () => {
+    const [pagination, setPagination] = useState({ 
+        current_page: 1, 
+        last_page: 1, 
+        total: 0, 
+        has_next: false, 
+        has_prev: false 
+    });
+    const [query, setQuery] = useState('');
+    
+    const fetchDesigns = async (page = 1, searchQuery = query) => {
         try {
             setLoading(true);
-            const { data } = await API.get('/app/shops/designs');
-            if (data?.data?.data) {
-                setDesigns(data.data.data);
-            } else if (data?.data) {
+            const { data } = await API.get(`/app/shops/designs?page=${page}&query=${searchQuery}`);
+            if (data?.data) {
                 setDesigns(data.data);
+                if (data.pagination) {
+                    setPagination(data.pagination);
+                }
             }
         } catch (e) {
             console.error('Failed to fetch POD designs', e);
@@ -48,8 +59,11 @@ export default function Dashboard() {
     };
 
     useEffect(() => {
-        fetchDesigns();
-    }, []);
+        const delaySearch = setTimeout(() => {
+            fetchDesigns(1, query);
+        }, 500);
+        return () => clearTimeout(delaySearch);
+    }, [query]);
 
     const handlePreviewClick = async (id) => {
         try {
@@ -103,6 +117,17 @@ export default function Dashboard() {
                         </Card>
 
                         <Card padding="0">
+                            <Box padding="400" borderBlockEndWidth="025" borderColor="border">
+                                <Filters
+                                    queryValue={query}
+                                    queryPlaceholder="Search by Product ID..."
+                                    onQueryChange={(val) => setQuery(val)}
+                                    onQueryClear={() => setQuery('')}
+                                    onClearAll={() => setQuery('')}
+                                    filters={[]}
+                                />
+                            </Box>
+                            
                             {loading ? (
                                 <Box padding="1000">
                                     <InlineStack align="center"><Spinner size="large" /></InlineStack>
@@ -115,62 +140,79 @@ export default function Dashboard() {
                                     </BlockStack>
                                 </Box>
                             ) : (
-                                <IndexTable
-                                    resourceName={{ singular: 'design', plural: 'designs' }}
-                                    itemCount={designs.length}
-                                    selectable={false}
-                                    headings={[
-                                        { title: 'Print Ready Output' },
-                                        { title: 'Linked Shopify Product' },
-                                        { title: 'Actions' }
-                                    ]}
-                                >
-                                    {designs.map((design, index) => (
-                                        <IndexTable.Row id={design.id} key={design.id} position={index}>
-                                            <IndexTable.Cell>
-                                                <InlineStack gap="300" blockAlign="center" padding="200">
-                                                    <Thumbnail source={design.design_image_url} alt="Custom POD Design" size="large" />
-                                                </InlineStack>
-                                            </IndexTable.Cell>
-                                            <IndexTable.Cell>
-                                                <Text variant="bodyMd" fontWeight="bold">ID: {design.product_id}</Text>
-                                            </IndexTable.Cell>
-                                            <IndexTable.Cell>
-                                                <InlineStack gap="200" blockAlign="center">
-                                                    <Button
-                                                        size="slim"
-                                                        icon={ViewIcon}
-                                                        loading={isFetchingDetail && selectedDesign?.id === design.id}
-                                                        onClick={() => handlePreviewClick(design.id)}
-                                                    >
-                                                        Preview
-                                                    </Button>
-                                                    <Button 
-                                                        size="slim" 
-                                                        variant="tertiary"
-                                                        onClick={async () => {
-                                                            try {
-                                                                const { data } = await API.get(`/app/shops/designs/${design.id}/token`);
-                                                                if (data.success && data.endpoint) {
-                                                                    const appUrl = process.env.MIX_APP_URL || process.env.APP_URL || '';
-                                                                    const url = `${appUrl}${data.endpoint}`;
-                                                                    window.open(url, '_blank');
+                                <BlockStack>
+                                    <IndexTable
+                                        resourceName={{ singular: 'design', plural: 'designs' }}
+                                        itemCount={designs.length}
+                                        selectable={false}
+                                        headings={[
+                                            { title: 'Print Ready Output' },
+                                            { title: 'Linked Shopify Product' },
+                                            { title: 'Actions' }
+                                        ]}
+                                    >
+                                        {designs.map((design, index) => (
+                                            <IndexTable.Row id={design.id} key={design.id} position={index}>
+                                                <IndexTable.Cell>
+                                                    <InlineStack gap="300" blockAlign="center" padding="200">
+                                                        <Thumbnail source={design.design_image_url} alt="Custom POD Design" size="large" />
+                                                    </InlineStack>
+                                                </IndexTable.Cell>
+                                                <IndexTable.Cell>
+                                                    <Text variant="bodyMd" fontWeight="bold">ID: {design.product_id}</Text>
+                                                    <Text variant="bodyMd" fontWeight="bold">Title: {design.product_title}</Text>
+                                                </IndexTable.Cell>
+                                                <IndexTable.Cell>
+                                                    <InlineStack gap="200" blockAlign="center">
+                                                        <Button
+                                                            size="slim"
+                                                            icon={ViewIcon}
+                                                            loading={isFetchingDetail && selectedDesign?.id === design.id}
+                                                            onClick={() => handlePreviewClick(design.id)}
+                                                        >
+                                                            Preview
+                                                        </Button>
+                                                        <Button 
+                                                            size="slim" 
+                                                            variant="tertiary"
+                                                            onClick={async () => {
+                                                                try {
+                                                                    const { data } = await API.get(`/app/shops/designs/${design.id}/token`);
+                                                                    if (data.success && data.endpoint) {
+                                                                        const appUrl = process.env.MIX_APP_URL || process.env.APP_URL || '';
+                                                                        const url = `${appUrl}${data.endpoint}`;
+                                                                        window.open(url, '_blank');
+                                                                    }
+                                                                } catch (err) {
+                                                                    console.error("Preparation failed", err);
                                                                 }
-                                                            } catch (err) {
-                                                                console.error("Preparation failed", err);
-                                                            }
-                                                        }}
-                                                    >
-                                                        <InlineStack gap="100" blockAlign="center">
-                                                            <span>Download Print Assets (ZIP)</span>
-                                                            <Icon source={ExternalIcon} />
-                                                        </InlineStack>
-                                                    </Button>
-                                                </InlineStack>
-                                            </IndexTable.Cell>
-                                        </IndexTable.Row>
-                                    ))}
-                                </IndexTable>
+                                                            }}
+                                                        >
+                                                            <InlineStack gap="100" blockAlign="center">
+                                                                <span>Download Print Assets (ZIP)</span>
+                                                                <Icon source={ExternalIcon} />
+                                                            </InlineStack>
+                                                        </Button>
+                                                    </InlineStack>
+                                                </IndexTable.Cell>
+                                            </IndexTable.Row>
+                                        ))}
+                                    </IndexTable>
+                                    
+                                    <Box padding="400" borderBlockStartWidth="025" borderColor="border" background="bg-surface-secondary">
+                                        <InlineStack align="space-between" blockAlign="center">
+                                            <Text tone="subdued" fontWeight="medium">
+                                                {`Showing ${designs.length} of ${pagination.total} designs (Page ${pagination.current_page} of ${pagination.last_page})`}
+                                            </Text>
+                                            <Pagination
+                                                hasPrevious={pagination.has_prev}
+                                                onPrevious={() => fetchDesigns(pagination.current_page - 1)}
+                                                hasNext={pagination.has_next}
+                                                onNext={() => fetchDesigns(pagination.current_page + 1)}
+                                            />
+                                        </InlineStack>
+                                    </Box>
+                                </BlockStack>
                             )}
                         </Card>
                     </BlockStack>

@@ -14,14 +14,32 @@ class CustomDesignController extends Controller
 {
     public function index(Request $request)
     {
-        // Don't select the design_data column here as it contains huge Base64 previews
-        // which can cause MySQL 'Out of sort memory' errors during pagination.
-        $designs = CustomDesign::select('id', 'user_id', 'product_id', 'status', 'design_image_url', 'created_at')
+        $query = $request->get('query');
+        $status = $request->get('status');
+        
+        $designs = CustomDesign::select('id', 'user_id', 'product_id', 'product_title', 'status', 'design_image_url', 'created_at')
             ->with('user')
+            ->when($query, function($q) use ($query) {
+                return $q->where('product_id', 'like', "%{$query}%");
+            })
+            ->when($status, function($q) use ($status) {
+                return $q->where('status', $status);
+            })
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(3);
             
-        return response()->json(['success' => true, 'data' => $designs]);
+        return response()->json([
+            'success' => true, 
+            'data' => $designs->items(),
+            'pagination' => [
+                'current_page' => $designs->currentPage(),
+                'last_page' => $designs->lastPage(),
+                'total' => $designs->total(),
+                'per_page' => $designs->perPage(),
+                'has_next' => $designs->hasMorePages(),
+                'has_prev' => !$designs->onFirstPage(),
+            ]
+        ]);
     }
 
     public function store(Request $request)
@@ -51,6 +69,7 @@ class CustomDesignController extends Controller
         $design = CustomDesign::create([
             'user_id' => $shop->id,
             'product_id' => $request->product_id,
+            'product_title' => $request->product_title,
             'design_data' => $designData,
             'design_image_url' => $imageUrls['image'] ?? $imageUrls['image_front'] ?? $imageUrls['image_back'] ?? '',
             'status' => 'pending',

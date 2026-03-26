@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('product_id')->nullable();
+            $table->string('product_title')->nullable();
             $table->json('design_data')->nullable();
             $table->string('design_image_url')->nullable();
             $table->string('status')->default('pending');

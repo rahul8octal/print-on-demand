@@ -9,6 +9,7 @@ class CustomDesign extends Model
     protected $fillable = [
         'user_id',
         'product_id',
+        'product_title',
         'design_data',
         'design_image_url',
         'status',

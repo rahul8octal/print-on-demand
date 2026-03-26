@@ -126,13 +126,6 @@ export default function Product3DView({
     isPreviewMode = false,
     isAutoRotate = false,
     focusedPart,
-    showDimensions,
-    width,
-    height_dim, // renamed from height because height is used for canvas height
-    depth,
-    dimension_unit,
-    extension,
-    productType = 'furniture'
 }) {
     const controlsRef = useRef();
 
@@ -234,11 +227,6 @@ export default function Product3DView({
                     colors={effectiveColors}
                     showHighlight={showPickModel}
                     showOnlySelected={showOnlySelected}
-                    showDimensions={showDimensions}
-                    width={width}
-                    height={height_dim}
-                    depth={depth}
-                    dimensionUnit={dimension_unit}
                 />
 
 

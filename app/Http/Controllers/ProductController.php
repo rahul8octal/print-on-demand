@@ -78,8 +78,7 @@ class ProductController extends Controller
         Product::create([
             'user_id' => $shop->id,
             'product_id' => $request->product_id,
-            'is_active' => true,
-            'product_type' => 'pod'
+            'is_active' => true
         ]);
         
         return response()->json(['success' => true, 'message' => 'Product added to POD Catalog']);
@@ -100,11 +99,7 @@ class ProductController extends Controller
     $request->validate([
       'product_id' => 'required',
       'model' => 'required_without:model_url|file|extensions:gltf,glb|max:102400',
-      'model_url' => 'required_without:model|url',
-      'width' => 'nullable|numeric',
-      'height' => 'nullable|numeric',
-      'depth' => 'nullable|numeric',
-      'dimension_unit' => 'nullable|string|max:10',
+      'model_url' => 'required_without:model|url'
     ], [
       'model.required_without' => '3D model file or URL is required.',
       'model.extensions' => 'Only GLTF, GLB model files are allowed.',
@@ -169,11 +164,7 @@ class ProductController extends Controller
         useMoreMemory();
         $request->validate([
             'product_id' => 'sometimes|required',
-            'model' => 'sometimes|file|extensions:gltf,glb|max:102400',
-            'width' => 'nullable|numeric',
-            'height' => 'nullable|numeric',
-            'depth' => 'nullable|numeric',
-            'dimension_unit' => 'nullable|string|max:10',
+            'model' => 'sometimes|file|extensions:gltf,glb|max:102400'
         ], [
             'model.extensions' => 'Only GLTF, GLB model files are allowed.',
             'model.max' => '3D model file must be under 100MB.',
@@ -206,7 +197,6 @@ class ProductController extends Controller
     public function returnPodCatalog()
     {
         $ids = Product::where('is_active', '=', true)
-            ->where('product_type', '=', 'pod')
             ->pluck('product_id');
 
         return response()->json(['success' => true, 'ids' => $ids]);

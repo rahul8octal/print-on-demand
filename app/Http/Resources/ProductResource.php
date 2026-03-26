@@ -22,11 +22,6 @@ class ProductResource extends JsonResource
             'is_active' => $this->is_active,
             'user' => UserResource::make($this->user),
             'model_url' => $this->model_url,
-            'width' => $this->width,
-            'height' => $this->height,
-            'depth' => $this->depth,
-            'dimension_unit' => $this->dimension_unit,
-            'product_type' => $this->product_type,
         ];
     }
 }

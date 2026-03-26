@@ -237,7 +237,7 @@ const injectStyles = () => {
     }
 };
 
-const ThemeDesigner = memo(({ productId, shopUrl }) => {
+const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
     const [status, setStatus] = useState({ loading: true, active: false });
     const [isDesignerOpen, setIsDesignerOpen] = useState(false);
     const [activeCategory, setActiveCategory] = useState('text'); // 'upload', 'text', 'layers', 'clipart', 'templates'
@@ -676,6 +676,7 @@ const ThemeDesigner = memo(({ productId, shopUrl }) => {
             const appUrl = (window.appConfig && window.appConfig.appUrl) || "https://print-on-demand.test";
             const formData = new FormData();
             formData.append('product_id', productId);
+            formData.append('product_title', productTitle || '');
             formData.append('shop_domain', shopUrl || '');
             
             // Upload current side
@@ -1006,6 +1007,7 @@ if (container) {
     root.render(
         <ThemeDesigner
             productId={container.dataset.productId}
+            productTitle={container.dataset.productTitle}
             shopUrl={container.dataset.shopUrl}
         />
     );

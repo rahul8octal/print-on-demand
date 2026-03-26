@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->enum('product_type', ['metal', 'furniture', 'pod'])->default('pod')->change();
+        Schema::table('custom_designs', function (Blueprint $table) {
+            $table->string('product_title')->nullable()->after('product_id');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->enum('product_type', ['metal', 'furniture'])->default('furniture')->change();
+        Schema::table('custom_designs', function (Blueprint $table) {
+            $table->dropColumn('product_title');
         });
     }
 };

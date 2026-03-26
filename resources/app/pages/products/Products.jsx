@@ -90,11 +90,6 @@ export default function Products() {
                     </InlineStack>
                 </IndexTable.Cell>
                 <IndexTable.Cell>
-                    <Text variant="bodyMd" tone="subdued" as="span">
-                        {product.product_type || 'N/A'}
-                    </Text>
-                </IndexTable.Cell>
-                <IndexTable.Cell>
                     <Badge tone={product.is_configured ? 'success' : 'attention'}>
                         {product.is_configured ? 'Customizable' : 'Standard'}
                     </Badge>

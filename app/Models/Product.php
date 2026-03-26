@@ -21,11 +21,6 @@ class Product extends Model implements HasMedia
         'is_active',
         'model_url',
         'shopify_file_id',
-        'width',
-        'height',
-        'depth',
-        'dimension_unit',
-        'product_type'
     ];
 
     protected $casts = [
