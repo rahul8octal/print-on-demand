@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Route;
 Route::group(['prefix' => 'shops'], function () {
     Route::get('/auth', [ShopController::class, 'auth']);
     Route::get('/designs', [\App\Http\Controllers\CustomDesignController::class, 'index']);
+    Route::get('/designs/{id}', [\App\Http\Controllers\CustomDesignController::class, 'show']);
     Route::get('/designs/{id}/token', [\App\Http\Controllers\CustomDesignController::class, 'generateDownloadToken']);
-    Route::post('/designs/{id}/sync', [\App\Http\Controllers\CustomDesignController::class, 'sync']);
 });
 
 Route::get('test-import-products', [TestController::class, 'importProducts']);

@@ -7,7 +7,6 @@ use Illuminate\Foundation\Queue\Queueable;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
-use App\Services\PrintfulService;
 
 class OrdersPaidJob implements ShouldQueue
 {
@@ -56,24 +55,6 @@ class OrdersPaidJob implements ShouldQueue
                         break;
                     }
                 }
-            }
-        }
-
-        if (count($podItems) > 0) {
-            Log::info("POD Items detected. Forwarding Order #{$this->data->id} to Printful.");
-            
-            $printful = new PrintfulService($shop);
-            $printfulResponse = $printful->createOrder($this->data, $podItems);
-            
-            if ($printfulResponse) {
-                Log::info("Successfully pushed Order #{$this->data->id} to Provider.");
-                // Sync Order Status: Mark designs as processing
-                foreach ($podItems as $item) {
-                    \App\Models\CustomDesign::where('design_image_url', '=', $item['design_url'])
-                        ->update(['status' => 'processing']);
-                }
-            } else {
-                Log::warning("Failed to push Order #{$this->data->id} to Print Provider.");
             }
         }
     }

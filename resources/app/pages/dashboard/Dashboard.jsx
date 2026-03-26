@@ -14,9 +14,10 @@ import {
     Grid,
     Link,
     Icon,
-    Modal
+    Modal,
+    Tabs
 } from '@shopify/polaris';
-import { ExternalIcon, StoreIcon, ViewIcon } from '@shopify/polaris-icons';
+import { ExternalIcon, StoreIcon, ViewIcon, ArrowRightIcon, ArrowLeftIcon } from '@shopify/polaris-icons';
 import React, { useState, useEffect } from 'react';
 import { API } from '../../api';
 import { useSelector } from "react-redux";
@@ -26,6 +27,9 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [designs, setDesigns] = useState([]);
     const [previewImage, setPreviewImage] = useState(null);
+    const [selectedDesign, setSelectedDesign] = useState(null);
+    const [activeSide, setActiveSide] = useState('front');
+    const [isFetchingDetail, setIsFetchingDetail] = useState(false);
     
     const fetchDesigns = async () => {
         try {
@@ -47,25 +51,23 @@ export default function Dashboard() {
         fetchDesigns();
     }, []);
 
-    const getStatusBadge = (status) => {
-        switch(status) {
-            case 'pending': return <Badge tone="warning">Pending Fulfillment</Badge>;
-            case 'processing': return <Badge tone="info">Processing via Printful</Badge>;
-            case 'printed': return <Badge tone="success">Shipped</Badge>;
-            default: return <Badge>{status}</Badge>;
+    const handlePreviewClick = async (id) => {
+        try {
+            setIsFetchingDetail(true);
+            const { data } = await API.get(`/app/shops/designs/${id}`);
+            if (data.success) {
+                setSelectedDesign(data.design);
+                setPreviewImage(data.design.design_image_url);
+                setActiveSide('front');
+            }
+        } catch (e) {
+            console.error('Failed to fetch design detail', e);
+        } finally {
+            setIsFetchingDetail(false);
         }
     };
 
-    const handleSync = async (id) => {
-        try {
-            const { data } = await API.post(`/app/shops/designs/${id}/sync`);
-            if (data.success) {
-                fetchDesigns();
-            }
-        } catch (e) {
-            console.error('Manual sync failed', e);
-        }
-    };
+    const currentSidePreview = selectedDesign?.design_data?.designs?.[activeSide]?.preview || selectedDesign?.design_image_url;
 
     return (
         <Page title="POD Dashboard" fullWidth primaryAction={{ content: 'Refresh Data', onAction: fetchDesigns }}>
@@ -96,22 +98,6 @@ export default function Dashboard() {
                                             </BlockStack>
                                         </Box>
                                     </Grid.Cell>
-                                    <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 4 }}>
-                                        <Box padding="400" borderRadius="200" background="bg-surface-secondary">
-                                            <BlockStack gap="100">
-                                                <Text variant="bodySm" tone="subdued">Pending Provider Sync</Text>
-                                                <Text variant="headingLg">{designs.filter(d => d.status === 'pending').length || 0}</Text>
-                                            </BlockStack>
-                                        </Box>
-                                    </Grid.Cell>
-                                    <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 4 }}>
-                                        <Box padding="400" borderRadius="200" background="bg-surface-secondary">
-                                            <BlockStack gap="100">
-                                                <Text variant="bodySm" tone="subdued">Printful Printing</Text>
-                                                <Text variant="headingLg">{designs.filter(d => d.status === 'processing').length || 0}</Text>
-                                            </BlockStack>
-                                        </Box>
-                                    </Grid.Cell>
                                 </Grid>
                             </BlockStack>
                         </Card>
@@ -136,7 +122,6 @@ export default function Dashboard() {
                                     headings={[
                                         { title: 'Print Ready Output' },
                                         { title: 'Linked Shopify Product' },
-                                        { title: 'Fulfillment Status' },
                                         { title: 'Actions' }
                                     ]}
                                 >
@@ -152,28 +137,11 @@ export default function Dashboard() {
                                             </IndexTable.Cell>
                                             <IndexTable.Cell>
                                                 <InlineStack gap="200" blockAlign="center">
-                                                    {getStatusBadge(design.status)}
-                                                    {design.status === 'pending' && (
-                                                        <Button 
-                                                            size="slim" 
-                                                            tone="magic" 
-                                                            variant="primary" 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleSync(design.id);
-                                                            }}
-                                                        >
-                                                            Sync to Provider
-                                                        </Button>
-                                                    )}
-                                                </InlineStack>
-                                            </IndexTable.Cell>
-                                            <IndexTable.Cell>
-                                                <InlineStack gap="200" blockAlign="center">
                                                     <Button
                                                         size="slim"
                                                         icon={ViewIcon}
-                                                        onClick={() => setPreviewImage(design.design_image_url)}
+                                                        loading={isFetchingDetail && selectedDesign?.id === design.id}
+                                                        onClick={() => handlePreviewClick(design.id)}
                                                     >
                                                         Preview
                                                     </Button>
@@ -210,22 +178,47 @@ export default function Dashboard() {
             </Layout>
 
             <Modal
-                open={!!previewImage}
-                onClose={() => setPreviewImage(null)}
+                open={!!selectedDesign}
+                onClose={() => {
+                    setPreviewImage(null);
+                    setSelectedDesign(null);
+                }}
                 title="Design Preview"
                 primaryAction={{
                     content: 'Close',
-                    onAction: () => setPreviewImage(null),
+                    onAction: () => setSelectedDesign(null),
                 }}
             >
                 <Modal.Section>
-                    <div style={{ display: 'flex', justifyContent: 'center', background: '#f6f6f7', padding: '20px', borderRadius: '8px' }}>
-                        <img 
-                            src={previewImage} 
-                            alt="Design Preview" 
-                            style={{ maxWidth: '100%', height: 'auto', borderRadius: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
-                        />
-                    </div>
+                    <BlockStack gap="400">
+                        {selectedDesign?.design_data?.designs?.back && (
+                            <InlineStack align="center" gap="400">
+                                <Button 
+                                    icon={ArrowLeftIcon} 
+                                    disabled={activeSide === 'front'}
+                                    onClick={() => setActiveSide('front')}
+                                >
+                                    Front View
+                                </Button>
+                                <Badge tone="info">{activeSide.toUpperCase()}</Badge>
+                                <Button 
+                                    icon={ArrowRightIcon} 
+                                    disabled={activeSide === 'back'}
+                                    onClick={() => setActiveSide('back')}
+                                >
+                                    Back View
+                                </Button>
+                            </InlineStack>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'center', background: '#f6f6f7', padding: '20px', borderRadius: '12px', minHeight: '400px' }}>
+                            <img 
+                                src={currentSidePreview} 
+                                alt={`Design Preview ${activeSide}`} 
+                                style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: '4px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }} 
+                            />
+                        </div>
+                    </BlockStack>
                 </Modal.Section>
             </Modal>
         </Page>
