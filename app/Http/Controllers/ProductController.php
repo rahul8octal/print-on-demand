@@ -5,10 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ProductModuleResource;
 use App\Http\Resources\ProductResource;
 use App\Interfaces\ProductRepositoryInterface;
-use App\Models\DemoProduct;
 use App\Models\Product;
-use App\Models\ThemeConfig;
-use App\Models\ProductConfig;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -44,7 +41,7 @@ class ProductController extends Controller
             $products = $response['body']->container['products'];
             
             // Cross-reference with our database to see which ones are already configured
-            $configuredIds = Product::where('user_id', '=', $shop->id, 'and')
+            $configuredIds = Product::where('user_id', $shop->id)
                 ->pluck('product_id')
                 ->toArray();
                 
@@ -66,8 +63,8 @@ class ProductController extends Controller
         ]);
         
         $shop = Auth::user();
-        $product = Product::where('user_id', '=', $shop->id, 'and')
-            ->where('product_id', '=', $request->product_id, 'and')
+        $product = Product::where('user_id', $shop->id)
+            ->where('product_id', $request->product_id)
             ->first();
             
         if ($product) {
@@ -172,7 +169,7 @@ class ProductController extends Controller
 
         $input = $request->all();
 
-        $product = Product::where('user_id', '=', AuthId())->findOrFail($id);
+        $product = Product::where('user_id', AuthId())->findOrFail($id);
         $shop = Auth::user();
 
         if ($request->hasFile('model')) {
@@ -196,7 +193,7 @@ class ProductController extends Controller
 
     public function returnPodCatalog()
     {
-        $ids = Product::where('is_active', '=', true)
+        $ids = Product::where('is_active', true)
             ->pluck('product_id');
 
         return response()->json(['success' => true, 'ids' => $ids]);
@@ -540,95 +537,5 @@ class ProductController extends Controller
     $this->productRepo->updateStatus($id);
 
     return $this->sendSuccess("Product status updated successfully");
-  }
-
-  public function getModel(Request $request)
-  {
-    $input = $request->all();
-
-    $product = $this->productRepo->getModel($input);
-
-    if (!$product) {
-      return $this->sendError('Product not found or inactive.', 404);
-    }
-
-    return $this->sendResponse($product, "Product model retrieved successfully.");
-  }
-
-  public function getPublicModel(Request $request)
-  {
-    $input = $request->validate([
-      'product_id' => 'required'
-    ]);
-
-    $productId = $input['product_id'];
-
-    $productForShop = Product::where('product_id', $productId)->first();
-
-    if ($productForShop) {
-      $this->productRepo->enforceProductLimitForShop($productForShop->user_id);
-    }
-
-    $product = Product::where('product_id', $productId)
-      ->where('is_active', true)
-      ->with('user')
-      ->first();
-
-    $responseData = null;
-
-    if ($product) {
-      $responseData = ProductModuleResource::make($product)->resolve();
-
-      // Fetch product details from Shopify using the associated user (shop)
-      if ($product->user) {
-        try {
-          $response = $product->user->api()->rest(
-            'GET',
-            "/admin/api/2024-01/products/{$productId}.json"
-          );
-
-          if (!$response['errors']) {
-            $shopifyProduct = $response['body']->container['product'] ?? null;
-            if ($shopifyProduct) {
-              $responseData['shopify_details'] = $shopifyProduct;
-            }
-          }
-        } catch (\Exception $e) {
-          Log::info($e->getMessage());
-        }
-      }
-    }
-
-    return $this->sendResponse($responseData, "Product model retrieved successfully.");
-  }
-
-  public function showPublicModelAR($productId)
-  {
-    $product = Product::where('id', $productId)
-      ->where('is_active', true)
-      ->first();
-
-    if (!$product) {
-      abort(404, 'Product not found or inactive');
-    }
-
-    $modelUrl = $product->model_url ?? $product->product_model;
-
-    return view('ar_view', ['modelUrl' => $modelUrl, 'product' => $product]);
-  }
-
-  public function showPublicAR($productId)
-  {
-    $product = Product::where('product_id', $productId)
-      ->where('is_active', true)
-      ->first();
-
-    if (!$product) {
-      abort(404, 'Product not found or inactive');
-    }
-
-    $modelUrl = $product->model_url ?? $product->product_model;
-
-    return view('ar_view', ['modelUrl' => $modelUrl, 'product' => $product]);
   }
 }

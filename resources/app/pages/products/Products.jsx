@@ -157,7 +157,6 @@ export default function Products() {
                                 itemCount={products.length}
                                 headings={[
                                     { title: 'Product' },
-                                    { title: 'Type' },
                                     { title: 'POD Status' },
                                     { title: 'Actions' },
                                 ]}

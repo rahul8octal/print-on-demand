@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('product_id');
             $table->boolean('is_active')->default(false);
             $table->string('model_url')->nullable();
+            $table->string('shopify_file_id')->nullable();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');

@@ -18,12 +18,6 @@ Route::get('/', function () {
     return view('app');
 })->middleware(['verify.shopify'])->name('home');
 
-Route::get('/ar/demo/{productId}', [ProductController::class, 'showPublicDemoAR']);
-
-Route::get('/ar/model/{productId}', [ProductController::class, 'showPublicModelAR']);
-
-Route::get('/ar/{productId}', [ProductController::class, 'showPublicAR']);
-
 Route::post('web-vitals', [GeneralController::class, 'createWebVital']);
 
 Route::group(['prefix' => 'general'], function () {

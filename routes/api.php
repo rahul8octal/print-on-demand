@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 
 
-Route::post('/product/model', [ProductController::class, 'getPublicModel']);
 Route::get('/pod/catalog', [ProductController::class, 'returnPodCatalog']);
 
 Route::post('/design', [CustomDesignController::class, 'store']);
