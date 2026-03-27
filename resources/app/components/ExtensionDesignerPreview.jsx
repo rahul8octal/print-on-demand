@@ -1,30 +1,48 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { fabric } from 'fabric';
 import WebFont from 'webfontloader';
 
 // Styles directly injected into the storefront (Theme Extension)
 const styles = `
+:root {
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --bg-main: #f8fafc;
+    --bg-paper: #ffffff;
+    --bg-dark: #0f172a;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
 .custom-designer-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
-    padding: 12px 24px;
-    border-radius: 999px;
-    border: 1px solid #4f46e5;
-    background: #4f46e5;
+    padding: 14px 28px;
+    border-radius: 12px;
+    border: none;
+    background: var(--primary);
     color: #fff;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     width: 100%;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
 }
 .custom-designer-btn:hover {
-    background: #4338ca;
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
 }
 .custom-designer-btn.is-disabled {
     pointer-events: none;
@@ -32,200 +50,250 @@ const styles = `
 }
 
 .designer-modal-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px);
-    z-index: 999998;
+    position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    background: rgba(15, 23, 42, 0.7) !important;
+    backdrop-filter: blur(8px) !important;
+    z-index: 2147483646 !important;
     animation: fadeIn 0.3s ease;
 }
 
 .designer-modal {
-    background: #ffffff;
-    border-radius: 20px;
-    width: 95%; max-width: 1400px;
-    height: 90vh;
-    display: flex; flex-direction: column; overflow: hidden;
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    z-index: 999999;
+    background: var(--bg-paper) !important;
+    border-radius: 24px !important;
+    width: 95vw !important; max-width: 1440px !important;
+    height: 90vh !important;
+    display: flex !important; flex-direction: column !important; overflow: hidden !important;
+    position: fixed !important; top: 5vh !important; left: 50% !important; 
+    transform: translateX(-50%) !important;
+    box-shadow: var(--shadow-lg) !important;
+    z-index: 2147483647 !important;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.designer-header {
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-paper);
+    display: flex;
+    align-items: center;
+}
+.designer-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
 .designer-layout {
-    display: flex; flex: 1; overflow: hidden; background: #fafafa;
+    display: flex; flex: 1; overflow: hidden; background: var(--bg-main);
 }
 
 .designer-category-sidebar {
-    width: 88px;
-    background: #1e293b;
+    width: 100px;
+    background: var(--bg-dark);
     display: flex; flex-direction: column;
-    align-items: center; padding: 24px 0;
-    gap: 12px;
+    align-items: center; padding: 32px 0;
+    gap: 16px;
 }
 
 .category-btn {
-    width: 64px; height: 64px;
+    width: 72px; height: 72px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     color: #94a3b8; background: transparent; border: none;
-    cursor: pointer; border-radius: 12px; font-size: 10px; font-weight: 600;
-    transition: all 0.2s; gap: 6px;
+    cursor: pointer; border-radius: 16px; font-size: 11px; font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); gap: 8px;
 }
-.category-btn:hover { color: #f8fafc; background: rgba(255,255,255,0.1); }
-.category-btn.is-active { color: #ffffff; background: #6366f1; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
-.category-item-icon { font-size: 20px; }
+.category-btn:hover { color: #f8fafc; background: rgba(255,255,255,0.08); transform: scale(1.05); }
+.category-btn.is-active { color: #ffffff; background: var(--primary); box-shadow: 0 8px 16px rgba(99, 102, 241, 0.4); transform: scale(1.05); }
+.category-item-icon { font-size: 24px; }
 
 .designer-toolbar {
-    width: 340px;
-    background: #ffffff;
-    border-right: 1px solid #f1f5f9;
+    width: 380px;
+    background: var(--bg-paper);
+    border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
 }
 
-.tool-section { padding: 24px; }
+.tool-section { padding: 32px; }
 
 .view-switcher {
-    display: flex; gap: 8px; padding: 12px 20px; border-bottom: 1px solid #f1f5f9;
+    display: inline-flex; gap: 6px; padding: 6px; border-radius: 14px; background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--border);
 }
 
 .view-btn {
-    padding: 6px 14px; border-radius: 20px; border: 1px solid #e1e7ef;
-    background: #fff; font-size: 13px; font-weight: 500; cursor: pointer;
+    padding: 10px 24px; border-radius: 10px; border: none;
+    background: transparent; font-size: 14px; font-weight: 600; cursor: pointer;
+    color: var(--text-secondary); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.view-btn.is-active { background: #6366f1; color: #fff; border-color: #6366f1; }
+.view-btn.is-active { background: #ffffff; color: var(--primary); box-shadow: var(--shadow-sm); }
+
+.designer-footer {
+    padding: 20px 32px;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    z-index: 20;
+}
+.footer-actions {
+    display: flex; align-items: center; gap: 24px;
+}
 
 .layer-item {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 12px; background: #f9fafb; border: 1px solid #e5e7eb;
-    border-radius: 8px; margin-bottom: 8px; font-size: 13px;
-    cursor: pointer;
+    padding: 12px 16px; background: #ffffff; border: 1px solid var(--border);
+    border-radius: 12px; margin-bottom: 12px; font-size: 14px;
+    cursor: pointer; transition: all 0.2s;
 }
-.layer-item.is-selected { border-color: #4f46e5; background: #eef2ff; }
-.layer-item .layer-type { color: #6b7280; font-size: 11px; text-transform: uppercase; }
+.layer-item:hover { border-color: var(--primary); background: #f8fafc; }
+.layer-item.is-selected { border-color: var(--primary); background: #eef2ff; box-shadow: 0 0 0 1px var(--primary); }
+.layer-item .layer-type { color: var(--text-secondary); font-size: 11px; text-transform: uppercase; font-weight: 700; }
 
 .property-group {
-    background: #f9fafb; border-radius: 12px; padding: 16px; border: 1px solid #f3f4f6;
+    background: #f8fafc; border-radius: 16px; padding: 20px; border: 1px solid var(--border);
+    margin-top: 24px;
 }
 
-.label-sm { font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 8px; display: block; }
+.label-sm { font-size: 12px; color: var(--text-secondary); font-weight: 700; margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.input-ctrl {
+    width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border);
+    font-size: 14px; color: var(--text-primary); transition: all 0.2s;
+    background: #ffffff; margin-bottom: 20px; outline: none;
+}
+.input-ctrl:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
 
 .clipart-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
 }
 .clipart-item {
-    aspect-ratio: 1; border: 1px solid #e5e7eb; border-radius: 8px;
+    aspect-ratio: 1; border: 1px solid var(--border); border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: all 0.2s; padding: 8px; background: #fff;
+    cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); padding: 12px; background: #fff;
 }
-.clipart-item:hover { border-color: #4f46e5; background: #f5f3ff; transform: scale(1.05); }
+.clipart-item:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: var(--shadow-md); }
 .clipart-item img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
 .quick-design-card {
-    border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px;
-    margin-bottom: 12px; cursor: pointer; transition: all 0.2s;
-    background: #fff; text-align: center;
+    border: 1px solid var(--border); border-radius: 14px; padding: 16px;
+    margin-bottom: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #fff; text-align: left; display: flex; align-items: center; gap: 16px;
 }
-.quick-design-card:hover { border-color: #4f46e5; background: #f5f3ff; }
-.quick-design-card span { font-size: 14px; font-weight: 600; color: #111827; }
+.quick-design-card:hover { border-color: var(--primary); transform: translateX(4px); box-shadow: var(--shadow-md); }
 
 .control-row {
-    display: flex; gap: 12px; margin-bottom: 12px; align-items: center;
+    display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-end;
 }
 .control-row > div { flex: 1; }
 
 .designer-canvas-wrapper {
     flex: 1; display: flex; flex-direction: column;
     padding: 60px; overflow: hidden; align-items: center; justify-content: center;
+    position: relative;
 }
 
 .tshirt-backdrop {
     background-size: contain; background-repeat: no-repeat;
     background-position: center;
     position: relative; width: 600px; height: 700px;
-    background-color: white; border-radius: 8px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    background-color: white; border-radius: 24px;
+    box-shadow: 0 30px 60px -12px rgba(0,0,0,0.15);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-secondary {
     display: flex; align-items: center; justify-content: center; width: 100%;
-    padding: 10px; border-radius: 8px;
-    background: #fff; border: 1px solid #d1d5db;
+    padding: 12px; border-radius: 10px;
+    background: #fff; border: 1px solid var(--border);
     cursor: pointer; text-align: center;
-    font-weight: 500; font-size: 14px;
+    font-weight: 600; font-size: 14px; color: var(--text-primary);
     transition: all 0.2s;
-    margin-bottom: 12px;
 }
-.btn-secondary:hover { background: #f3f4f6; }
+.btn-secondary:hover { background: #f1f5f9; border-color: #cbd5e1; }
 
 .btn-danger {
     display: inline-block; width: 100%;
-    padding: 10px; border-radius: 8px;
-    background: #fee2e2; border: 1px solid #fecaca;
-    color: #dc2626; cursor: pointer; text-align: center;
-    font-weight: 500; font-size: 14px;
+    padding: 12px; border-radius: 10px;
+    background: #fef2f2; border: 1px solid #fee2e2;
+    color: #ef4444; cursor: pointer; text-align: center;
+    font-weight: 600; font-size: 14px;
     transition: all 0.2s;
 }
-.btn-danger:hover { background: #fecaca; }
+.btn-danger:hover { background: #fee2e2; }
 
 .align-btn-group {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;
 }
 
 .btn-small {
-    padding: 6px 12px; border-radius: 6px; border: 1px solid #e5e7eb;
-    background: #fff; font-size: 12px; cursor: pointer;
-    display: flex; align-items: center; gap: 4px; justify-content: center;
+    padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border);
+    background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-primary);
+    display: flex; align-items: center; gap: 8px; justify-content: center;
+    transition: all 0.2s;
 }
-.btn-small:hover { background: #f9fafb; }
+.btn-small:hover { border-color: var(--primary); color: var(--primary); background: #f5f3ff; }
 
 .btn-primary {
     display: inline-block; width: 100%;
-    padding: 14px; border-radius: 8px;
-    background: #4f46e5; border: none;
+    padding: 16px; border-radius: 14px;
+    background: var(--primary); border: none;
     color: #fff; cursor: pointer; text-align: center;
-    font-weight: 600; font-size: 16px;
-    transition: all 0.2s;
+    font-weight: 700; font-size: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
 }
-.btn-primary:hover { background: #4338ca; }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
 .btn-icon-close {
-    position: absolute; top: 16px; right: 16px;
-    background: #ffffff; border: 1px solid #e2e8f0; cursor: pointer;
-    font-size: 16px; color: #64748b; padding: 8px; border-radius: 50%;
+    position: absolute; top: 24px; right: 24px;
+    background: var(--bg-paper); border: 1px solid var(--border); cursor: pointer;
+    font-size: 18px; color: var(--text-secondary); padding: 10px; border-radius: 50%;
     z-index: 10; display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    transition: all 0.2s; box-shadow: var(--shadow-sm);
 }
-.btn-icon-close:hover { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+.btn-icon-close:hover { background: #fef2f2; color: #ef4444; border-color: #fee2e2; transform: rotate(90deg); }
 
-.font-search-container { position: sticky; top: 0; background: #fff; z-index: 5; padding-bottom: 12px; }
-.font-category-chips { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 8px; }
+.font-search-container { position: sticky; top: 0; background: #fff; z-index: 5; padding-bottom: 20px; }
+.font-category-chips { 
+    display: flex; gap: 10px; overflow-x: auto; margin: 0 -32px 24px; padding: 0 32px 12px; 
+    scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
+}
+.font-category-chips::-webkit-scrollbar { height: 4px; display: block; }
+.font-category-chips::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
 .category-chip { 
-    white-space: nowrap; padding: 6px 14px; border-radius: 20px; 
-    background: #f1f5f9; font-size: 13px; color: #475569; 
+    white-space: nowrap; padding: 8px 18px; border-radius: 99px; 
+    background: #f1f5f9; font-size: 13px; font-weight: 600; color: var(--text-secondary); 
     border: 1px solid transparent; cursor: pointer; transition: all 0.2s;
 }
-.category-chip:hover { background: #e2e8f0; }
-.category-chip.is-active { background: #6366f1; color: #fff; border-color: #6366f1; }
-
-.curved-text-previews { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-.curved-preview-card { 
-    aspect-ratio: 1; border: 1px solid #e2e8f0; border-radius: 8px; 
-    display: flex; align-items: center; justify-content: center; 
-    background: #fff; cursor: pointer; transition: all 0.2s; padding: 8px;
-}
-.curved-preview-card:hover { border-color: #6366f1; transform: scale(1.02); }
-.curved-preview-card img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.category-chip:hover { background: #e2e8f0; color: var(--text-primary); }
+.category-chip.is-active { background: var(--primary); color: #fff; }
 
 .font-list-item { 
     display: flex; align-items: center; justify-content: space-between; 
-    padding: 10px 0; border-bottom: 1px solid #f1f5f9; cursor: pointer;
+    padding: 16px 4px; border-bottom: 1px solid #f1f5f9; cursor: pointer;
     transition: all 0.2s;
 }
-.font-list-item:hover { color: #6366f1; }
-.font-list-item span { font-size: 15px; }
+.font-list-item:hover { transform: translateX(4px); color: var(--primary); }
+.font-list-item span:first-child { font-size: 16px; }
+
+input[type="range"] {
+    -webkit-appearance: none; width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 18px; background: var(--primary); border-radius: 50%; cursor: pointer;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); transition: all 0.2s;
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.2); }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes slideUp { from { transform: translateX(-50%) translateY(20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
 `;
 
 const injectStyles = () => {
@@ -254,6 +322,15 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
     const [productImages, setProductImages] = useState({ front: null, back: null });
     const [selectedObject, setSelectedObject] = useState(null);
     const [layers, setLayers] = useState([]);
+
+    useEffect(() => {
+        if (isDesignerOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [isDesignerOpen]);
 
     const [objProps, setObjProps] = useState({
         text: '',
@@ -751,34 +828,32 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
                 ✨ Customize Design
             </button>
 
-            {isDesignerOpen && (
+            {isDesignerOpen && createPortal(
                 <>
                     <div className="designer-modal-overlay" onClick={() => setIsDesignerOpen(false)}></div>
                     <div className="designer-modal">
                         <button className="btn-icon-close" onClick={() => setIsDesignerOpen(false)}>✕</button>
 
                         <div className="designer-header">
-                            <div></div>
                             <h2>Custom Studio Design</h2>
-                            <div></div>
                         </div>
 
                         <div className="designer-layout">
                             <div className="designer-category-sidebar">
                                 <button className={`category-btn ${activeCategory === 'upload' ? 'is-active' : ''}`} onClick={() => setActiveCategory('upload')}>
-                                    <div className="category-item-icon">↑</div> Upload
+                                    <div className="category-item-icon">📂</div> Upload
                                 </button>
                                 <button className={`category-btn ${activeCategory === 'text' ? 'is-active' : ''}`} onClick={() => setActiveCategory('text')}>
-                                    <div className="category-item-icon">T</div> Add text
+                                    <div className="category-item-icon">✍️</div> Add text
                                 </button>
                                 <button className={`category-btn ${activeCategory === 'clipart' ? 'is-active' : ''}`} onClick={() => setActiveCategory('clipart')}>
-                                    <div className="category-item-icon">☺</div> Graphics
+                                    <div className="category-item-icon">🎨</div> Graphics
                                 </button>
                                 <button className={`category-btn ${activeCategory === 'templates' ? 'is-active' : ''}`} onClick={() => setActiveCategory('templates')}>
-                                    <div className="category-item-icon">⚡</div> Templates
+                                    <div className="category-item-icon">💎</div> Templates
                                 </button>
                                 <button className={`category-btn ${activeCategory === 'layers' ? 'is-active' : ''}`} onClick={() => setActiveCategory('layers')}>
-                                    <div className="category-item-icon">☰</div> Layers
+                                    <div className="category-item-icon">📁</div> Layers
                                 </button>
                             </div>
 
@@ -813,17 +888,6 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
                                                         {cat}
                                                     </div>
                                                 ))}
-                                            </div>
-
-                                            <div className="tool-group">
-                                                <h3 style={{ textTransform: 'none', fontSize: '15px' }}>Curved Text</h3>
-                                                <div className="curved-text-previews">
-                                                    {(assets.presets['Curved Text'] || []).map((item) => (
-                                                        <div key={item.id} className="curved-preview-card" onClick={() => handleAddText(item.config?.font || 'Inter')}>
-                                                            <img src={item.content} alt={item.name} title={item.config?.text} />
-                                                        </div>
-                                                    ))}
-                                                </div>
                                             </div>
 
                                             <div className="tool-group">
@@ -904,13 +968,21 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
                                     )}
 
                                     {selectedObject && (
-                                        <div className="property-group" style={{ marginTop: '20px' }}>
+                                        <div className="property-group">
                                             <div className="tool-group" style={{ marginBottom: 0 }}>
-                                                <h3 style={{ fontSize: '15px', color: '#6366f1' }}>Selection Settings</h3>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                                    <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Selection Settings</h3>
+                                                    <button className="btn-small" onClick={deleteSelected} style={{ padding: '6px 12px', borderColor: '#fee2e2', color: '#ef4444' }}>
+                                                        Delete
+                                                    </button>
+                                                </div>
+
                                                 {selectedObject.type === 'i-text' && (
                                                     <>
                                                         <label className="label-sm">Content</label>
                                                         <textarea className="input-ctrl" 
+                                                                  rows={3}
+                                                                  style={{ minHeight: '80px', resize: 'vertical' }}
                                                                   value={objProps.text} 
                                                                   onChange={(e) => updateObjectProp('text', e.target.value)} />
                                                         
@@ -924,35 +996,35 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
                                                     </>
                                                 )}
 
-                                                <label className="label-sm">Color</label>
-                                                <input type="color" className="input-ctrl" 
-                                                       style={{ height: '40px' }}
-                                                       value={objProps.color} 
-                                                       onChange={(e) => updateObjectProp('fill', e.target.value)} />
-
+                                                <label className="label-sm">Appearance</label>
                                                 <div className="control-row">
                                                     <div>
-                                                        <label className="label-sm">Opacity</label>
-                                                        <input type="range" min="0" max="1" step="0.1" 
-                                                               value={objProps.opacity} 
-                                                               onChange={(e) => updateObjectProp('opacity', parseFloat(e.target.value))} />
+                                                        <label className="label-sm" style={{ fontSize: '10px', color: '#94a3b8' }}>Color</label>
+                                                        <input type="color" className="input-ctrl" 
+                                                               style={{ height: '44px', padding: '4px', cursor: 'pointer' }}
+                                                               value={objProps.color} 
+                                                               onChange={(e) => updateObjectProp('fill', e.target.value)} />
                                                     </div>
                                                     <div>
-                                                        <label className="label-sm">Rotation</label>
+                                                        <label className="label-sm" style={{ fontSize: '10px', color: '#94a3b8' }}>Rotation</label>
                                                         <input type="number" className="input-ctrl" 
+                                                               style={{ height: '44px' }}
                                                                value={Math.round(objProps.angle)} 
                                                                onChange={(e) => updateObjectProp('angle', parseInt(e.target.value))} />
                                                     </div>
                                                 </div>
 
-                                                <label className="label-sm">Flip</label>
-                                                <div className="align-btn-group" style={{ marginBottom: '16px' }}>
-                                                    <button className="btn-small" onClick={() => handleFlip('h')}>Flip H</button>
-                                                    <button className="btn-small" onClick={() => handleFlip('v')}>Flip V</button>
+                                                <label className="label-sm">Opacity ({Math.round(objProps.opacity * 100)}%)</label>
+                                                <div style={{ marginBottom: '24px', padding: '0 4px' }}>
+                                                    <input type="range" min="0" max="1" step="0.01" 
+                                                           value={objProps.opacity} 
+                                                           onChange={(e) => updateObjectProp('opacity', parseFloat(e.target.value))} />
                                                 </div>
 
-                                                <label className="label-sm">Position</label>
+                                                <label className="label-sm">Manipulation</label>
                                                 <div className="align-btn-group">
+                                                    <button className="btn-small" onClick={() => handleFlip('h')}>Flip H</button>
+                                                    <button className="btn-small" onClick={() => handleFlip('v')}>Flip V</button>
                                                     <button className="btn-small" onClick={handleAlignCenter}>⇎ Center</button>
                                                     <button className="btn-small" onClick={handleAlignMiddle}>⇕ Middle</button>
                                                 </div>
@@ -960,39 +1032,39 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
                                         </div>
                                     )}
                                 </div>
-                                
-                                {/* Sticky Footer for Sidebar */}
-                                <div style={{ 
-                                    padding: '16px 20px', 
-                                    borderTop: '1px solid #e2e8f0', 
-                                    background: '#f8fafc',
-                                    marginTop: 'auto'
-                                }}>
-                                    <button className="btn-primary" 
-                                            onClick={handleSaveAndAddToCart} 
-                                            disabled={isSaving}
-                                            style={{ width: '100%', borderRadius: '12px', padding: '14px', fontSize: '16px' }}>
-                                        {isSaving ? 'Processing...' : 'Add To Cart'}
-                                    </button>
-                                </div>
                             </div>
 
                             <div className="designer-canvas-wrapper" style={{ flexDirection: 'column' }}>
-                                <div className="view-switcher" style={{ marginBottom: '24px', zIndex: 10 }}>
-                                    <button className={`view-btn ${activeView === 'front' ? 'is-active' : ''}`} onClick={() => handleViewSwitch('front')}>Front</button>
-                                    <button className={`view-btn ${activeView === 'back' ? 'is-active' : ''}`} onClick={() => handleViewSwitch('back')}>Back</button>
-                                </div>
-                                
                                 <div className="tshirt-backdrop" style={{
                                     backgroundImage: `url(${productImages[activeView] || ''})`
                                 }}>
                                     <canvas ref={canvasRef}></canvas>
                                 </div>
                             </div>
+                        </div>
 
+                        <div className="designer-footer">
+                            <div className="view-switcher">
+                                <button className={`view-btn ${activeView === 'front' ? 'is-active' : ''}`} onClick={() => handleViewSwitch('front')}>Front View</button>
+                                <button className={`view-btn ${activeView === 'back' ? 'is-active' : ''}`} onClick={() => handleViewSwitch('back')}>Back View</button>
+                            </div>
+
+                            <div className="footer-actions">
+                                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Total Price</span>
+                                    <span style={{ fontSize: '18px', fontWeight: 800, color: '#1e293b' }}>$50.00</span>
+                                </div>
+                                <button className="btn-primary" 
+                                        onClick={handleSaveAndAddToCart} 
+                                        disabled={isSaving}
+                                        style={{ width: '200px', padding: '14px 28px' }}>
+                                    {isSaving ? 'Processing...' : 'Add To Cart'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </>
+                </>,
+                document.body
             )}
         </>
     );

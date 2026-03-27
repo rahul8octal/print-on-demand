@@ -44,22 +44,6 @@ class DesignAssetSeeder extends Seeder
             ]);
         }
 
-        // 3. Curved Text Presets
-        $presets = [
-            ['Hustle More', 'https://cdn-icons-png.flaticon.com/512/3659/3659784.png', 'Circular text Hustle More Coffee'],
-            ['Surfing Wave', 'https://cdn-icons-png.flaticon.com/512/2913/2913520.png', 'Wavy surfing the wave'],
-            ['Be Good', 'https://cdn-icons-png.flaticon.com/512/2589/2589175.png', 'Be good Do good']
-        ];
-
-        foreach ($presets as $p) {
-            DesignAsset::updateOrCreate(['name' => $p[0]], [
-                'type' => 'preset',
-                'category' => 'Curved Text',
-                'content' => $p[1],
-                'config' => ['text' => $p[2]]
-            ]);
-        }
-
         // 4. Graphics - Love
         $love = [
             ['Be Mine', 'https://cdn-icons-png.flaticon.com/512/2107/2107845.png'],

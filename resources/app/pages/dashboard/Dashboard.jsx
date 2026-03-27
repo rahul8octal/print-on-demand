@@ -225,43 +225,54 @@ export default function Dashboard() {
                     setPreviewImage(null);
                     setSelectedDesign(null);
                 }}
-                title="Design Preview"
-                primaryAction={{
-                    content: 'Close',
-                    onAction: () => setSelectedDesign(null),
-                }}
+                title="Print Design Preview"
             >
-                <Modal.Section>
-                    <BlockStack gap="400">
+                <div style={{ paddingTop: '14px' }}>
+                    <BlockStack gap="600">
                         {selectedDesign?.design_data?.designs?.back && (
-                            <InlineStack align="center" gap="400">
-                                <Button 
-                                    icon={ArrowLeftIcon} 
-                                    disabled={activeSide === 'front'}
-                                    onClick={() => setActiveSide('front')}
-                                >
-                                    Front View
-                                </Button>
-                                <Badge tone="info">{activeSide.toUpperCase()}</Badge>
-                                <Button 
-                                    icon={ArrowRightIcon} 
-                                    disabled={activeSide === 'back'}
-                                    onClick={() => setActiveSide('back')}
-                                >
-                                    Back View
-                                </Button>
+                            <InlineStack align="center">
+                                <div style={{ background: '#f1f5f9', padding: '4px', borderRadius: '10px', display: 'inline-flex', gap: '4px' }}>
+                                    <Button 
+                                        variant={activeSide === 'front' ? 'secondary' : 'tertiary'}
+                                        onClick={() => setActiveSide('front')}
+                                        size="slim"
+                                    >
+                                        Front View
+                                    </Button>
+                                    <Button 
+                                        variant={activeSide === 'back' ? 'secondary' : 'tertiary'}
+                                        onClick={() => setActiveSide('back')}
+                                        size="slim"
+                                    >
+                                        Back View
+                                    </Button>
+                                </div>
                             </InlineStack>
                         )}
 
-                        <div style={{ display: 'flex', justifyContent: 'center', background: '#f6f6f7', padding: '20px', borderRadius: '12px', minHeight: '400px' }}>
+                        <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            background: '#f8fafc', 
+                            borderRadius: '16px', 
+                            border: '1px solid #e2e8f0',
+                            minHeight: '500px',
+                            position: 'relative',
+                            overflow: 'hidden'
+                        }}>
                             <img 
                                 src={currentSidePreview} 
                                 alt={`Design Preview ${activeSide}`} 
-                                style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: '4px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }} 
+                                style={{ 
+                                    maxWidth: '100%', 
+                                    maxHeight: '600px', 
+                                    objectFit: 'contain', 
+                                    filter: 'drop-shadow(0 20px 30px rgba(0,0,0,0.08))'
+                                }} 
                             />
                         </div>
                     </BlockStack>
-                </Modal.Section>
+                </div>
             </Modal>
         </Page>
     );
