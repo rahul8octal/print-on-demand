@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('design_assets', function (Blueprint $table) {
             $table->id();
-            $table->string('type'); // 'font', 'graphic', 'preset'
+            $table->string('type'); // 'font', 'element', 'preset'
             $table->string('category'); // 'Shapes', 'Love', 'Patterns', 'Display', 'Handwriting'
             $table->string('name')->nullable();
             $table->text('content'); // font name or image_url

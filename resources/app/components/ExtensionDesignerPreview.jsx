@@ -312,7 +312,7 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
     const [activeView, setActiveView] = useState('front'); // 'front', 'back'
     const [viewDesigns, setViewDesigns] = useState({ front: null, back: null });
 
-    const [assets, setAssets] = useState({ fonts: [], graphics: {}, presets: {} });
+    const [assets, setAssets] = useState({ fonts: [], elements: {}, presets: {} });
     const [fontSearch, setFontSearch] = useState('');
     const [activeFontCategory, setActiveFontCategory] = useState('All');
 
@@ -595,19 +595,93 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
         }
     }, [selectedObject]);
 
-    const handleAddClipart = (url) => {
-        if (!canvas) return;
-        fabric.Image.fromURL(url, (img) => {
-            img.scaleToWidth(150);
-            img.set({
-                left: 150, top: 150,
-                cornerColor: '#4f46e5', borderColor: '#4f46e5',
-                cornerSize: 10, transparentCorners: false,
+    const handleAddClipart = (item) => {
+        if (!canvas || !item) return;
+        
+        // Handle both object input and legacy path input
+        const path = typeof item === 'string' ? item : item.content;
+        const appUrl = (window.appConfig && window.appConfig.appUrl) || window.location.origin;
+        const fullUrl = path.startsWith('http') ? path : `${appUrl}/${path}`;
+
+        // If we have the raw SVG content from the API, use it directly (bypasses CORS)
+        if (item.content_raw && path.toLowerCase().endsWith('.svg')) {
+            fabric.loadSVGFromString(item.content_raw, (objects, options) => {
+                if (!objects || objects.length === 0) return;
+                const obj = fabric.util.groupSVGElements(objects, options);
+                if (!obj) return;
+
+                obj.set({
+                    left: canvas.width / 2, 
+                    top: canvas.height / 2,
+                    originX: 'center', 
+                    originY: 'center',
+                    cornerColor: '#4f46e5', 
+                    borderColor: '#4f46e5',
+                    cornerSize: 10, 
+                    transparentCorners: false,
+                });
+
+                if (obj.width > obj.height) obj.scaleToWidth(150);
+                else obj.scaleToHeight(150);
+
+                canvas.add(obj);
+                canvas.setActiveObject(obj);
+                canvas.requestRenderAll();
             });
-            canvas.add(img);
-            canvas.setActiveObject(img);
-            canvas.renderAll();
-        }, { crossOrigin: 'anonymous' });
+            return;
+        }
+
+        if (fullUrl.toLowerCase().endsWith('.svg')) {
+            // ... fallback logic (same as before)
+            axios.get(fullUrl, { crossdomain: true })
+                .then(res => {
+                    fabric.loadSVGFromString(res.data, (objects, options) => {
+                        if (!objects || objects.length === 0) return;
+                        const obj = fabric.util.groupSVGElements(objects, options);
+                        if (!obj) return;
+                        obj.set({
+                            left: canvas.width / 2, top: canvas.height / 2,
+                            originX: 'center', originY: 'center',
+                            cornerColor: '#4f46e5', borderColor: '#4f46e5',
+                            cornerSize: 10, transparentCorners: false,
+                        });
+                        if (obj.width > obj.height) obj.scaleToWidth(150);
+                        else obj.scaleToHeight(150);
+                        canvas.add(obj);
+                        canvas.setActiveObject(obj);
+                        canvas.requestRenderAll();
+                    });
+                })
+                .catch(err => {
+                    console.error("SVG loading failed via axios:", err.message);
+                    fabric.loadSVGFromURL(fullUrl, (objects, options) => {
+                        if (objects && objects.length > 0) {
+                            const obj = fabric.util.groupSVGElements(objects, options);
+                            obj.set({
+                                left: 200, top: 200,
+                                cornerColor: '#4f46e5', borderColor: '#4f46e5',
+                                cornerSize: 10, transparentCorners: false,
+                            });
+                            obj.scaleToWidth(150);
+                            canvas.add(obj);
+                            canvas.setActiveObject(obj);
+                            canvas.requestRenderAll();
+                        }
+                    }, null, { crossOrigin: 'anonymous' });
+                });
+        } else {
+            fabric.Image.fromURL(fullUrl, (img) => {
+                img.scaleToWidth(150);
+                img.set({
+                    left: 200, top: 200,
+                    cornerColor: '#4f46e5', borderColor: '#4f46e5',
+                    cornerSize: 10, transparentCorners: false,
+                });
+                canvas.add(img);
+                canvas.setActiveObject(img);
+                canvas.requestRenderAll();
+            }, { crossOrigin: 'anonymous' });
+        }
     };
 
     const handleFlip = (direction) => {
@@ -847,7 +921,7 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
                                     <div className="category-item-icon">✍️</div> Add text
                                 </button>
                                 <button className={`category-btn ${activeCategory === 'clipart' ? 'is-active' : ''}`} onClick={() => setActiveCategory('clipart')}>
-                                    <div className="category-item-icon">🎨</div> Graphics
+                                    <div className="category-item-icon">🎨</div> Elements
                                 </button>
                                 <button className={`category-btn ${activeCategory === 'templates' ? 'is-active' : ''}`} onClick={() => setActiveCategory('templates')}>
                                     <div className="category-item-icon">💎</div> Templates
@@ -915,7 +989,7 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
 
                                     {activeCategory === 'clipart' && (
                                         <>
-                                            {Object.entries(assets.graphics).map(([catName, items]) => (
+                                            {Object.entries(assets.elements).map(([catName, items]) => (
                                                 <div key={catName} className="tool-group">
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                                                         <h3 style={{ textTransform: 'none', fontSize: '18px', margin: 0 }}>{catName}</h3>
@@ -923,8 +997,8 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
                                                     </div>
                                                     <div className="clipart-grid">
                                                         {items.map((item) => (
-                                                            <div key={item.id} className="clipart-item" onClick={() => handleAddClipart(item.content)}>
-                                                                <img src={item.content} alt={item.name} />
+                                                            <div key={item.id} className="clipart-item" onClick={() => handleAddClipart(item)}>
+                                                                <img src={item.content.startsWith('http') ? item.content : `${(window.appConfig && window.appConfig.appUrl) || window.location.origin}/${item.content}`} alt={item.name} />
                                                             </div>
                                                         ))}
                                                     </div>
@@ -940,8 +1014,8 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
                                                 {Object.values(assets.presets).flat().filter(p => p.category !== 'Curved Text').map((tpl) => (
                                                     <div key={tpl.id} className="quick-design-card" 
                                                          style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer' }}
-                                                         onClick={() => handleAddClipart(tpl.content)}>
-                                                        <img src={tpl.content} style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+                                                         onClick={() => handleAddClipart(tpl)}>
+                                                            <img src={tpl.content.startsWith('http') ? tpl.content : `${(window.appConfig && window.appConfig.appUrl) || window.location.origin}/${tpl.content}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
                                                         <span style={{ fontSize: '14px', fontWeight: '500' }}>{tpl.name}</span>
                                                     </div>
                                                 ))}

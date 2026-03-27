@@ -10,15 +10,46 @@ class DesignAssetSeeder extends Seeder
     public function run()
     {
         // 1. Fonts
-        $fonts = [
-            ['Arima', 'Display'], ['Atma', 'Handwriting'], ['Audiowide', 'Display'], 
-            ['Azeret Mono', 'Monospace'], ['Bad Script', 'Handwriting'], ['Bagel Fat One', 'Display'],
-            ['Bakbak One', 'Display'], ['Bangers', 'Display'], ['Berkshire Swash', 'Display'],
-            ['Black Ops One', 'Display'], ['Boogaloo', 'Display'], ['Borel', 'Handwriting'],
-            ['Bungee', 'Display'], ['Cabin Sketch', 'Display']
-        ];
+     $Fonts = [
+        
+    // 🔹 Modern Sans-serif
+        ['Rubik', 'Sans-serif'], ['Kanit', 'Sans-serif'], ['Hind', 'Sans-serif'],
+        ['Mulish', 'Sans-serif'], ['Asap', 'Sans-serif'], ['Barlow', 'Sans-serif'],
+        ['Barlow Condensed', 'Sans-serif'], ['Barlow Semi Condensed', 'Sans-serif'],
+        ['Figtree', 'Sans-serif'], ['Heebo', 'Sans-serif'], ['IBM Plex Sans', 'Sans-serif'],
+        ['Public Sans', 'Sans-serif'], ['Red Hat Display', 'Sans-serif'],
+        ['Red Hat Text', 'Sans-serif'], ['Signika', 'Sans-serif'],
+        ['Exo 2', 'Sans-serif'], ['Questrial', 'Sans-serif'],
+        ['Assistant', 'Sans-serif'], ['Cabin', 'Sans-serif'],
+        ['Karla', 'Sans-serif'], ['PT Sans', 'Sans-serif'],
 
-        foreach ($fonts as $f) {
+        // 🔹 Serif Premium
+        ['Crimson Text', 'Serif'], ['Crimson Pro', 'Serif'],
+        ['EB Garamond', 'Serif'], ['Zilla Slab', 'Serif'],
+        ['Alegreya', 'Serif'], ['Alegreya Sans', 'Sans-serif'],
+        ['Vollkorn', 'Serif'], ['Bitter', 'Serif'],
+        ['Domine', 'Serif'], ['Prata', 'Serif'],
+
+        // 🔹 Display / Heading
+        ['Archivo Black', 'Display'], ['Alfa Slab One', 'Display'],
+        ['Abril Fatface', 'Display'], ['Cinzel', 'Display'],
+        ['DM Serif Display', 'Display'], ['Josefin Sans', 'Display'],
+        ['Righteous', 'Display'], ['Syncopate', 'Display'],
+        ['Chakra Petch', 'Display'], ['Gruppo', 'Display'],
+
+        // 🔹 Handwriting / Script
+        ['Allura', 'Handwriting'], ['Alex Brush', 'Handwriting'],
+        ['Cookie', 'Handwriting'], ['Marck Script', 'Handwriting'],
+        ['Sacramento', 'Handwriting'], ['Tangerine', 'Handwriting'],
+        ['Yellowtail', 'Handwriting'], ['Handlee', 'Handwriting'],
+
+        // 🔹 Monospace (for dev / tech UI)
+        ['Fira Code', 'Monospace'], ['JetBrains Mono', 'Monospace'],
+        ['Source Code Pro', 'Monospace'], ['IBM Plex Mono', 'Monospace'],
+        ['Inconsolata', 'Monospace']
+    ];
+
+        foreach ($Fonts as $f) {
             DesignAsset::updateOrCreate(['name' => $f[0]], [
                 'type' => 'font',
                 'category' => $f[1],
@@ -28,48 +59,49 @@ class DesignAssetSeeder extends Seeder
 
         // 2. Shapes
         $shapes = [
-            ['Star', 'https://cdn-icons-png.flaticon.com/512/1828/1828884.png'],
-            ['Heart', 'https://cdn-icons-png.flaticon.com/512/2589/2589175.png'],
-            ['Line', 'https://cdn-icons-png.flaticon.com/512/649/649721.png'],
-            ['Triangle', 'https://cdn-icons-png.flaticon.com/512/481/481078.png'],
-            ['Circle', 'https://cdn-icons-png.flaticon.com/512/481/481065.png'],
-            ['Square', 'https://cdn-icons-png.flaticon.com/512/481/481072.png']
+            ['Home', 'home.svg'],
+            ['Star', 'star.svg'],
+            ['Heart', 'heart.svg'],
+            ['Line', 'line.svg'],
+            ['Triangle', 'triangle.svg'],
+            ['Circle', 'circle.svg'],
+            ['Square', 'square.svg']
         ];
 
         foreach ($shapes as $s) {
             DesignAsset::updateOrCreate(['name' => $s[0]], [
-                'type' => 'graphic',
+                'type' => 'element',
                 'category' => 'Shapes',
-                'content' => $s[1]
+                'content' => 'assets/shapes/' . $s[1]
             ]);
         }
 
-        // 4. Graphics - Love
+        // 4. Element - Love
         $love = [
-            ['Be Mine', 'https://cdn-icons-png.flaticon.com/512/2107/2107845.png'],
-            ['Heart Arrow', 'https://cdn-icons-png.flaticon.com/512/2107/2107952.png'],
-            ['Love TicTac', 'https://cdn-icons-png.flaticon.com/512/1046/1046784.png'] // placeholder
+            ['Be Mine', 'be-mine.svg'],
+            ['Heart Arrow', 'heart-arrow.svg'],
+            ['Love TicTac', 'love-tictac.svg']
         ];
 
         foreach ($love as $l) {
             DesignAsset::updateOrCreate(['name' => $l[0]], [
-                'type' => 'graphic',
+                'type' => 'element',
                 'category' => 'Love',
-                'content' => $l[1]
+                'content' => 'assets/shapes/' . $l[1]
             ]);
         }
         
         // 5. Patterns
         $patterns = [
-            ['Avocado', 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png'],
-            ['Beach', 'https://cdn-icons-png.flaticon.com/512/2664/2664531.png']
+            ['Avocado', 'avocado.svg'],
+            ['Beach', 'beach.svg']
         ];
 
-        foreach ($patterns as $pattern) {
-            DesignAsset::updateOrCreate(['name' => $pattern[0]], [
-                'type' => 'graphic',
+        foreach ($patterns as $p) {
+            DesignAsset::updateOrCreate(['name' => $p[0]], [
+                'type' => 'element',
                 'category' => 'Patterns',
-                'content' => $pattern[1]
+                'content' => 'assets/shapes/' . $p[1]
             ]);
         }
     }

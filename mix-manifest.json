@@ -1,16 +1,6 @@
 {
     "/public/js/app.js": "/public/js/app.js",
     "/extensions/custom-design-studio/assets/designer.js": "/extensions/custom-design-studio/assets/designer.js",
-    "/public/images/AR-app-banner.png": "/public/images/AR-app-banner.png",
-    "/public/images/app_embeded.png": "/public/images/app_embeded.png",
-    "/public/images/contact.svg": "/public/images/contact.svg",
-    "/public/images/guide/step1.png": "/public/images/guide/step1.png",
-    "/public/images/guide/step2.png": "/public/images/guide/step2.png",
-    "/public/images/guide/step3.png": "/public/images/guide/step3.png",
-    "/public/images/guide/step4.png": "/public/images/guide/step4.png",
-    "/public/images/guide/step5.png": "/public/images/guide/step5.png",
     "/public/images/page_not_found.webp": "/public/images/page_not_found.webp",
-    "/public/images/server_error.webp": "/public/images/server_error.webp",
-    "/public/images/try_on.png": "/public/images/try_on.png",
-    "/public/images/tutorial-image-200.png": "/public/images/tutorial-image-200.png"
+    "/public/images/server_error.webp": "/public/images/server_error.webp"
 }
