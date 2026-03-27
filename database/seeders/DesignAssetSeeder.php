@@ -65,7 +65,21 @@ class DesignAssetSeeder extends Seeder
             ['Line', 'line.svg'],
             ['Triangle', 'triangle.svg'],
             ['Circle', 'circle.svg'],
-            ['Square', 'square.svg']
+            ['Square', 'square.svg'],
+            ['Add Image', 'add-image.svg'],
+            ['Address Book', 'address-book.svg'],
+            ['Address Card', 'address-card.svg'],
+            ['Android', 'android.svg'],
+            ['Apple Pay', 'apple-pay.svg'],
+            ['Apple', 'apple.svg'],
+            ['Marker', 'marker.svg'],
+            ['Twitter', 'twitter.svg'],
+            ['Add', 'add.svg'],
+            ['Game', 'game.svg'],
+            ['Headset', 'headset.svg'],
+            ['Search', 'search.svg'],
+            ['Shopping Cart', 'shopping-cart.svg'],
+            ['Tik Tok', 'tik-tok.svg']
         ];
 
         foreach ($shapes as $s) {
