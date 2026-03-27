@@ -584,9 +584,14 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
     // Handle property sync
     useEffect(() => {
         if (selectedObject) {
+            // For groups/SVGs, get fill color from the first child
+            const baseColor = selectedObject.getObjects ? 
+                (selectedObject.getObjects()[0]?.fill || '#000000') : 
+                (selectedObject.fill || '#000000');
+                
             setObjProps({
                 text: selectedObject.text || '',
-                color: selectedObject.fill || '#000000',
+                color: baseColor,
                 fontSize: selectedObject.fontSize || 24,
                 fontFamily: selectedObject.fontFamily || 'Inter',
                 opacity: selectedObject.opacity || 1,
@@ -736,6 +741,20 @@ const ThemeDesigner = memo(({ productId, shopUrl, productTitle }) => {
 
     const updateObjectProp = (prop, value) => {
         if (!selectedObject) return;
+
+        // Custom logic for Groups (SVGs): setting fill on a group doesn't 
+        // always propagate to its children unless objects are updated individually.
+        if (prop === 'fill' && selectedObject.getObjects) {
+            const children = selectedObject.getObjects();
+            children.forEach(obj => {
+                obj.set('fill', value);
+                // Recursive handling for nested groups if any
+                if (obj.getObjects) {
+                    obj.getObjects().forEach(nested => nested.set('fill', value));
+                }
+            });
+        }
+
         selectedObject.set(prop, value);
         canvas.renderAll();
         setObjProps(prev => ({ ...prev, [prop]: value }));
